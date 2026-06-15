@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gartenparty Jeopardy PRO 2026</title>
+
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f0f1a 0%, #151528 50%, #0b0b14 100%);
+      --card-bg: rgba(22, 22, 39, 0.75);
+      --card-border: rgba(255, 204, 0, 0.15);
+      --accent-color: #ffcc00;
+      --accent-neon: #ffaa00;
+      --cyan-neon: #00f2fe;
+      --text-light: #f4f4f9;
+      --text-muted: #8fa0c0;
+      --text-dark: #0f0f1a;
+      --danger: #ff3333;
+      --success: #00ffcc;
+    }
+
+    body {
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      text-align: center;
+      padding: 30px 15px; 
+      background: var(--bg-gradient);
+      color: var(--text-light);
+      margin: 0;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* --- VERBINDUNGS-INDIKATOR STYLE --- */
+    .network-status {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      z-index: 9999;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .status-online { background: rgba(0, 255, 204, 0.2); color: var(--success); border-color: var(--success); }
+    .status-offline { background: rgba(255, 51, 51, 0.2); color: var(--danger); border-color: var(--danger); }
+
+    .star-field {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .beer-star {
+      position: absolute;
+      opacity: 0;
+      fill: #ffcc00;
+      filter: drop-shadow(0 0 4px rgba(255, 204, 0, 0.6));
+    }
+
+    .twinkle-slow { animation: pulseBeer 4.5s infinite ease-in-out; }
+    .twinkle-mid { animation: pulseBeer 3.0s infinite ease-in-out; }
+    .twinkle-fast { animation: pulseBeer 1.8s infinite ease-in-out; }
+
+    @keyframes pulseBeer {
+      0%, 100% { opacity: 0.02; transform: scale(0.6) rotate(-5deg); }
+      50% { opacity: 0.45; transform: scale(1.4) rotate(8deg); }
+    }
+
+    #login-screen, #board-screen, #question-screen, #end-screen {
+      position: relative;
+      z-index: 1;
+      display: none;
+    }
+
+    h1 {
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 5px;
+      color: #fff;
+      text-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+    }
+
+    .welcome-text {
+      max-width: 700px; 
+      margin: 30px auto; 
+      line-height: 1.7;
+      background: var(--card-bg); 
+      padding: 30px;
+      border-radius: 16px;
+      color: var(--text-light);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .welcome-text h3 {
+      color: var(--accent-color);
+      font-size: 24px;
+      margin-top: 0;
+    }
+
+    .team-selection-container {
+      max-width: 500px;
+      margin: 30px auto;
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--card-border);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+
+    .team-selection-container h4 {
+      font-size: 18px;
+      margin: 0 0 20px 0;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+    }
+
+    .team-btn {
+      display: block;
+      width: 100%;
+      max-width: 350px;
+      margin: 15px auto !important;
+      padding: 16px 20px !important;
+      font-size: 20px !important;
+      font-weight: 700;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.03);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      letter-spacing: 1px;
+    }
+
+    .team-btn:hover {
+      background: rgba(255, 204, 0, 0.1);
+      border-color: var(--accent-color);
+      box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .board-header {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      max-width: 1200px;
+      margin: 0 auto 30px auto;
+      background: var(--card-bg);
+      padding: 20px 30px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+
+    .live-leaderboard {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      width: 100%;
+      margin-top: 5px;
+      flex-wrap: wrap;
+    }
+
+    .leaderboard-chip {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 15px;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+
+    .leaderboard-chip.my-team {
+      border-color: var(--cyan-neon);
+      color: #fff;
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
+    }
+
+    .leaderboard-chip .score-val {
+      color: var(--accent-color);
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    .jeopardy-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 18px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .category-title {
+      background: rgba(15, 15, 26, 0.8);
+      color: var(--cyan-neon);
+      padding: 20px 5px;
+      font-weight: 800;
+      font-size: 16px;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 242, 254, 0.2);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 45px;
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.05);
+    }
+
+    .matrix-cell {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 35px 10px;
+      font-size: 38px;
+      font-weight: 800;
+      color: var(--accent-color);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+      text-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+    }
+
+    .matrix-cell:hover:not(.locked):not(.solved):not(.failed) {
+      background: rgba(35, 35, 60, 0.8);
+      border-color: var(--cyan-neon);
+      color: #fff;
+      text-shadow: 0 0 15px var(--cyan-neon);
+      transform: scale(1.04);
+      box-shadow: 0 0 25px rgba(0, 242, 254, 0.2);
+    }
+
+    .matrix-cell.locked {
+      background: rgba(255, 170, 0, 0.05);
+      color: rgba(255, 170, 0, 0.2);
+      border-color: rgba(255, 170, 0, 0.2);
+      cursor: not-allowed;
+      text-shadow: none;
+    }
+    .matrix-cell.locked::after {
+      content: "🔒 IN USE";
+      display: block;
+      font-size: 11px;
+      margin-top: 8px;
+      font-weight: 600;
+      color: var(--accent-neon);
+      letter-spacing: 1px;
+    }
+
+    .matrix-cell.solved {
+      background: rgba(0, 255, 204, 0.15);
+      color: var(--success);
+      border-color: rgba(0, 255, 204, 0.7);
+      cursor: not-allowed;
+      text-shadow: 0 0 15px rgba(0, 255, 204, 0.6);
+      box-shadow: inset 0 0 15px rgba(0, 255, 204, 0.2), 0 0 12px rgba(0, 255, 204, 0.2);
+      animation: pulseSolved 3s infinite ease-in-out;
+    }
+    .matrix-cell.solved::after {
+      content: "GELÖST";
+      display: block;
+      font-size: 11px;
+      margin-top: 8px;
+      font-weight: 800;
+      color: var(--success);
+      letter-spacing: 1px;
+      text-shadow: none;
+    }
+
+    @keyframes pulseSolved {
+      0%, 100% { border-color: rgba(0, 255, 204, 0.4); box-shadow: inset 0 0 15px rgba(0, 255, 204, 0.1); }
+      50% { border-color: rgba(0, 255, 204, 0.9); box-shadow: inset 0 0 25px rgba(0, 255, 204, 0.4), 0 0 15px rgba(0, 255, 204, 0.3); }
+    }
+
+    .matrix-cell.failed {
+      background: rgba(255, 51, 51, 0.03);
+      color: rgba(255, 51, 51, 0.2);
+      border-color: rgba(255, 51, 51, 0.2);
+      cursor: not-allowed;
+      text-shadow: none;
+    }
+    .matrix-cell.failed::after {
+      content: "GESPERRT";
+      display: block;
+      font-size: 11px;
+      margin-top: 8px;
+      font-weight: 700;
+      color: var(--danger);
+      letter-spacing: 1px;
+    }
+
+    .question-box {
+      max-width: 850px;
+      margin: 40px auto;
+      background: var(--card-bg); 
+      padding: 45px;
+      border-radius: 20px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6); 
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(15px);
+    }
+
+    .question-text {
+      font-size: 28px;
+      font-weight: 600;
+      line-height: 1.5;
+      margin: 25px 0 45px 0;
+      text-align: left;
+      color: #fff;
+    }
+
+    .answers-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .answer-btn {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-light);
+      padding: 22px;
+      font-size: 19px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: left;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+
+    .answer-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--cyan-neon);
+      box-shadow: 0 0 15px rgba(0, 242, 254, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .answer-btn:disabled {
+      cursor: not-allowed;
+    }
+
+    #timer-glass {
+      height: 4px;
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      margin: 0 auto 35px auto;
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+    }
+    #timer-glass::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0; height: 100%; width: 100%;
+      background: linear-gradient(to right, var(--accent-color), var(--cyan-neon));
+      opacity: 0.7;
+    }
+
+    .podium-card {
+      max-width: 650px;
+      margin: 40px auto;
+      background: var(--card-bg);
+      padding: 45px;
+      border-radius: 24px;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+      border: 1px solid var(--card-border); 
+      backdrop-filter: blur(15px);
+    }
+
+    .score-table {
+      width: 100%;
+      margin: 30px auto 10px auto;
+      border-collapse: collapse;
+      font-size: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .score-table th, .score-table td {
+      padding: 18px 25px;
+      text-align: left;
+    }
+
+    .score-table th {
+      background-color: rgba(15, 15, 26, 0.8);
+      color: var(--cyan-neon);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: 15px;
+      border-bottom: 1px solid rgba(0, 242, 254, 0.2);
+    }
+
+    .score-table td {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    @media (max-width: 768px) {
+      .jeopardy-grid { grid-template-columns: 1fr; }
+      .answers-grid { grid-template-columns: 1fr; }
+      .category-title { margin-top: 15px; }
+      .category-title:first-child { margin-top: 0; }
+      .board-header { padding: 15px; }
+      .header-top { flex-direction: column; gap: 10px; text-align: center; }
+      .question-box { padding: 25px; }
+      .question-text { font-size: 20px; }
+      .answer-btn { font-size: 16px; padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="net-indicator" class="network-status status-offline">Prüfe Verbindung...</div>
+
+  <div class="star-field" id="star-container"></div>
+
+  <div id="login-screen" style="display: block;">
+    <h1>Gartenparty Jeopardy PRO</h1>
+    <div class="welcome-text">
+      <h3>Willkommen beim Echtzeit-Jeopardy! 🧠</h3>
+      <p>
+        Vor euch liegt die große Quiz-Matrix. Alle Teams spielen <strong>gleichzeitig</strong> und wählen frei aus den 5 Rubriken. 
+        Die Zahlen verraten die Wertigkeit: Eine 1 gibt 1 Punkt, eine 5 bringt satte 5 Punkte!<br><br>
+        <strong>Aber Achtung:</strong> Sobald ein Team einen Umschlag öffnet, ist er für alle anderen gesperrt. 
+        Löst ihr falsch, wird die Frage für die Konkurrenz wieder freigegeben – für euch bleibt sie jedoch dicht. Viel Erfolg!
+      </p>
+    </div>
+    <div class="team-selection-container">
+      <h4>Wählt euer Team aus:</h4>
+      <button class="team-btn" onclick="loginTeam('Hopfen')">🌾 Team Hopfen</button>
+      <button class="team-btn" onclick="loginTeam('Malz')">🪵 Team Malz</button>
+      <button class="team-btn" onclick="loginTeam('Bier')">🍺 Team Bier</button>
+      <button class="team-btn" onclick="loginTeam('Durst')">🔥 Team Durst</button>
+    </div>
+  </div>
+
+  <div id="board-screen">
+    <div class="board-header">
+      <div class="header-top">
+        <h3 id="display-team" style="color: var(--cyan-neon); margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 1px;"></h3>
+        <h2 style="margin: 0; font-weight: 800; letter-spacing: 2px; font-size: 22px;">GARTENPARTY JEOPARDY</h2>
+        <h3 id="display-score" style="margin: 0; font-size: 20px; color: var(--accent-color); font-weight: 700;">Score: 0 Punkte</h3>
+      </div>
+      <div class="live-leaderboard" id="leaderboard-container"></div>
+    </div>
+    <div class="jeopardy-grid" id="matrix-container"></div>
+  </div>
+
+  <div id="question-screen">
+    <div class="question-box">
+      <div id="question-info" style="color: var(--cyan-neon); font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;"></div>
+      <div class="question-text" id="active-question-text">Lade Frage...</div>
+      <div id="timer-glass"></div>
+      <div class="answers-grid" id="answers-container"></div>
+    </div>
+  </div>
+
+  <div id="end-screen">
+    <div class="podium-card">
+      <h1 style="font-size: 36px; margin-bottom: 5px; color: #fff;">🏆 ENDERGEBNIS 🏆</h1>
+      <p style="color: var(--text-muted); font-size: 16px; margin-bottom: 25px;">Alle Fragen wurden beantwortet.</p>
+      
+      <table class="score-table" id="final-score-table">
+        <thead>
+          <tr><th>Platz</th><th>Team</th><th>Punkte</th></tr>
+        </thead>
+        <tbody id="score-table-body"></tbody>
+      </table>
+      <p style="font-size: 24px; margin-top: 35px; color: var(--accent-color); letter-spacing: 4px;">✨ GRATULATION ✨</p>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <script>
+    let currentTeam = "";
+    let myScore = 0;
+    let questionsData = [];
+    let gameStateData = {};
+    let activeQuestion = null;
+    let realtimeChannel = null;
+    let supabaseClientInstance = null;
+    let isOfflineMode = false;
+
+    const allTeamsList = ["Hopfen", "Malz", "Bier", "Durst"];
+    const categories = ["Abkürzungen", "Bierländer", "Fussball-WM", "Rubrik 4", "Rubrik 5"];
+
+    const localQuestionsBackup = [
+      { id: 1, category: "Abkürzungen", points: 1, question: "Was bedeutet der Begriff „VAR“?", answer_a: "Video Assistant Referee", answer_b: "Visual Assistant Robot", answer_c: "Virtual Area Referee", answer_d: "Velocity Analysis Radar", correct_answer: "Video Assistant Referee" },
+      { id: 2, category: "Abkürzungen", points: 2, question: "Wofür steht die Abkürzung „WLAN“ im Bereich der Netzwerktechnik?", answer_a: "Wireless Local Area Network", answer_b: "Wired Link Assisted Network", answer_c: "Wave Length Access Note", answer_d: "Wide Logistics Authentication Network", correct_answer: "Wireless Local Area Network" },
+      { id: 3, category: "Abkürzungen", points: 3, question: "Wofür steht das „G“ in Bezeichnungen wie 4G oder 5G im Mobilfunk?", answer_a: "Gateway", answer_b: "Generation", answer_c: "Gigabit", answer_d: "Global", correct_answer: "Generation" },
+      { id: 4, category: "Abkürzungen", points: 4, question: "Wofür steht die Abkürzung „USB“ bei Computeranschlüssen?", answer_a: "Unified Storage Battery", answer_b: "Universal Smart Bridge", answer_c: "Uniform System Backup", answer_d: "Universal Serial Bus", correct_answer: "Universal Serial Bus" },
+      { id: 5, category: "Abkürzungen", points: 5, question: "Wofür steht die Abkürzung „HDMI“ bei modernen Video- und Audiokabeln?", answer_a: "Home Display Managed Interconnect", answer_b: "Hyper-Digital Musik Input", answer_c: "High-Definition Multimedia Interface", answer_d: "High-Sensity Media Integration", correct_answer: "High-Definition Multimedia Interface" },
+      { id: 6, category: "Bierländer", points: 1, question: "Aus welchem Land stammt das weltbekannte, dunkle Stout-Bier „Guinness“?", answer_a: "Irland", answer_b: "Schottland", answer_c: "Niederlande", answer_d: "England", correct_answer: "Irland" },
+      { id: 7, category: "Bierländer", points: 2, question: "Aus welchem Land kommt die traditionsreiche Premium-Marke „Stella Artois“?", answer_a: "Frankreich", answer_b: "Belgien", answer_c: "Luxemburg", answer_d: "Dänemark", correct_answer: "Belgien" },
+      { id: 8, category: "Bierländer", points: 3, question: "Aus welchem Land stammt das beliebte, hellgoldene Lagerbier „Karlovačko“?", answer_a: "Slowenien", answer_b: "Kroatien", answer_c: "Serbien", answer_d: "Slowakei", correct_answer: "Kroatien" },
+      { id: 9, category: "Bierländer", points: 4, question: "Woher kommt die Brauerei „Švyturys“? (Tipp: gegründet 1784 in einer bekannten Hafenstadt an der Ostsee)", answer_a: "Estland", answer_b: "Litauen", answer_c: "Polen", answer_d: "Finnland", correct_answer: "Litauen" },
+      { id: 10, category: "Bierländer", points: 5, question: "Woher stammt das milde Lagerbier „Quilmes“?", answer_a: "Mexiko", answer_b: "Brasilien", answer_c: "Argentinien", answer_d: "Chile", correct_answer: "Argentinien" },
+      { id: 11, category: "Fussball-WM", points: 1, question: "Wie viele Nationen nehmen durch die historische Aufstockung der FIFA erstmals insgesamt an der WM-Endrunde teil?", answer_a: "32", answer_b: "36", answer_c: "42", answer_d: "48", correct_answer: "48" },
+      { id: 12, category: "Fussball-WM", points: 2, question: "Welches Land wird zum dritten Mal Gastgeber einer WM-Endrunde (nach 1970 und 1986)?", answer_a: "USA", answer_b: "Kanada", answer_c: "Mexiko", answer_d: "Brasilien", correct_answer: "Mexiko" },
+      { id: 13, category: "Fussball-WM", points: 3, question: "Welches Stadion wurde von der FIFA als offizieller Austragungsort für das große Endspiel ausgewählt?", answer_a: "Aztekenstadion", answer_b: "MetLife Stadium / NY Jersey", answer_c: "SoFi Stadium / Los Angeles", answer_d: "AT&T Stadium / Dallas", correct_answer: "MetLife Stadium / NY Jersey" },
+      { id: 14, category: "Fussball-WM", points: 4, question: "Welche sportliche Neuerung beim Weg ins Finale gibt es durch die Aufstockung auf 48 Teams?", answer_a: "Zwischenrunde mit Play-offs für Gruppendritte", answer_b: "Einführung des Sechzehntelfinales (8 Siege nötig)", answer_c: "Die vier besten Gruppensieger überspringen Runde 1", answer_d: "Keine Unentschieden mehr in der Gruppenphase", correct_answer: "Zwischenrunde mit Play-offs für Gruppendritte" },
+      { id: 15, category: "Fussball-WM", points: 5, question: "Wie viele Mannschaften nehmen zum ersten Mal in ihrer Geschichte an einer WM-Endrunde teil?", answer_a: "3 Mannschaften", answer_b: "4 Mannschaften", answer_c: "5 Mannschaften", answer_d: "6 Mannschaften", correct_answer: "4 Mannschaften" },
+      { id: 16, category: "Rubrik 4", points: 1, question: "Welcher Fluss fließt auf seinem Weg zum Schwarzen Meer durch insgesamt zehn europäische Länder?", answer_a: "Rhein", answer_b: "Elbe", answer_c: "Donau", answer_d: "Oder", correct_answer: "Donau" },
+      { id: 17, category: "Rubrik 4", points: 2, question: "Welches Land hat gemeinsam mit China die meisten Landesgrenzen weltweit (nämlich stolze 14 Nachbarn)?", answer_a: "Russland", answer_b: "Brasilien", answer_c: "Indien", answer_d: "Kanada", correct_answer: "Russland" },
+      { id: 18, category: "Rubrik 4", points: 3, question: "Welche beiden Hauptstädte weltweit liegen am dichtesten beieinander und sind nur durch den Fluss Kongo getrennt?", answer_a: "Wien und Bratislava", answer_b: "Brazzaville und Kinshasa", answer_c: "Buenos Aires und Montevideo", answer_d: "Helsinki und Tallinn", correct_answer: "Brazzaville und Kinshasa" },
+      { id: 19, category: "Rubrik 4", points: 4, question: "Wie viel der gesamten Erdoberfläche bedeckt der Pazifische Ozean in etwa?", answer_a: "Ungefähr 20 %", answer_b: "Ungefähr 35 %", answer_c: "Ungefähr 50 %", answer_d: "Ungefähr 65 %", correct_answer: "Ungefähr 35 %" },
+      { id: 20, category: "Rubrik 4", points: 5, question: "Welches Land hat die längste gemeinsame Landesgrenze mit Frankreich?", answer_a: "Spanien", answer_b: "Deutschland", answer_c: "Brasilien", answer_d: "Algerien", correct_answer: "Brasilien" },
+      { id: 21, category: "Rubrik 5", points: 1, question: "Welches Spielzeugprodukt wurde in den 1950er Jahren ursprünglich als Tapetenreiniger erfunden?", answer_a: "Lego-Bausteine", answer_b: "Playmobil", answer_c: "Knete (Play-Doh)", answer_d: "Textmarker", correct_answer: "Knete (Play-Doh)" },
+      { id: 22, category: "Rubrik 5", points: 2, question: "Welches praktische Büro-Ding wurde ausgerechnet von einem Bankräuber im Gefängnis erfunden?", answer_a: "Der Locher", answer_b: "Der Anspitzer", answer_c: "Die Büroklammer", answer_d: "Der Klebestift", correct_answer: "Der Locher" },
+      { id: 23, category: "Rubrik 5", points: 3, question: "Welches dieser Tiere besitzt sage und schreibe drei Herzen und blaues Blut?", answer_a: "Der Haifisch", answer_b: "Der Tintenfisch (Krake)", answer_c: "Der Regenwurm", answer_d: "Das Krokodil", correct_answer: "Der Tintenfisch (Krake)" },
+      { id: 24, category: "Rubrik 5", points: 4, question: "Wie lange dauert es in etwa, bis eine klassische Glasflasche in der Natur vollständig biologisch abgebaut ist?", answer_a: "Rund 500 Jahre", answer_b: "Rund 5.000 Jahre", answer_c: "Rund 50.000 Jahre", answer_d: "Rund 500.000 Jahre oder länger", correct_answer: "Rund 500.000 Jahre oder länger" },
+      { id: 25, category: "Rubrik 5", points: 5, question: "Welches weltbekannte Lebensmittel ist das einzige, das unter normalen Bedingungen niemals verdirbt?", answer_a: "Honig", answer_b: "Weißer Reis", answer_c: "Ahornsirup", answer_d: "Olivenöl", correct_answer: "Honig" }
+    ];
+
+    function createBeerStars() {
+      const container = document.getElementById('star-container');
+      if (!container) return;
+      const beerCount = 55; 
+      const rhythms = ['twinkle-slow', 'twinkle-mid', 'twinkle-fast'];
+
+      for (let i = 0; i < beerCount; i++) {
+        const svgNamespace = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(svgNamespace, "svg");
+        const height = Math.random() * 24 + 20; 
+        const width = height * 0.75;
+        
+        svg.setAttribute("viewBox", "0 0 24 32");
+        svg.setAttribute("width", width);
+        svg.setAttribute("height", height);
+        svg.setAttribute("class", `beer-star ${rhythms[Math.floor(Math.random() * rhythms.length)]}`);
+        
+        svg.innerHTML = `
+          <path d="M6 6 Q12 2 18 6 Q21 6 20 9 Q12 11 4 9 Q3 6 6 6 Z" fill="#ffffff" />
+          <path d="M5 10 L6 26 Q12 30 18 26 L19 10 Z" fill="#ffcc00" />
+          <path d="M19 12 Q23 14 22 19 Q21 23 18 22" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+        `;
+        
+        svg.style.left = `${Math.random() * 100}%`;
+        svg.style.top = `${Math.random() * 100}%`;
+        svg.style.animationDelay = `${Math.random() * 4}s`; 
+        container.appendChild(svg);
+      }
+    }
+
+    window.onload = function() {
+      createBeerStars();
+    };
+
+    function updateVisualStatus(isLive, details = "") {
+      const indicator = document.getElementById("net-indicator");
+      if(!indicator) return;
+      if(isLive) {
+        indicator.className = "network-status status-online";
+        indicator.innerText = "🟢 LIVE-MODUS (Supabase)";
+      } else {
+        indicator.className = "network-status status-offline";
+        indicator.innerText = "🔴 OFFLINE-MODUS " + (details ? `(${details})` : "(Lokales Backup)");
+      }
+    }
+
+    function loginTeam(teamName) {
+      currentTeam = teamName;
+      
+      if (window.location.protocol === 'file:' || window.location.hostname === '') {
+        isOfflineMode = true;
+        updateVisualStatus(false, "Lokale Datei");
+        activateOfflinePreview(teamName);
+        return;
+      }
+
+      try {
+        // HIER SIND NUN DEINE EXAKTEN DATEN ZUGEWIESEN:
+        const supabaseUrl = "https://accjeyhsrghbxezyboxt.supabase.co";
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMjg5ODIsImV4cCI6MjA5NzEwNDk4Mn0.njbnA14y98wuVdoPJHlk3tsBBQcOCC4A0nOfBUrlqzQ";
+        
+        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+          supabaseClientInstance = window.supabase.createClient(supabaseUrl, supabaseKey, {
+            auth: { persistSession: false }
+          });
+          
+          loadInitialData().then(() => {
+            isOfflineMode = false;
+            updateVisualStatus(true);
+            document.getElementById("login-screen").style.display = "none";
+            document.getElementById("board-screen").style.display = "block";
+            document.getElementById("display-team").innerText = "TEAM: " + currentTeam.toUpperCase();
+            buildMatrix();
+            setupRealtime();
+          }).catch(err => {
+            console.error("Datenfehler beim Laden:", err);
+            isOfflineMode = true;
+            updateVisualStatus(false, "Tabellen-Fehler (404)");
+            activateOfflinePreview(teamName);
+          });
+        } else {
+          isOfflineMode = true;
+          updateVisualStatus(false, "Bibliothek blockiert");
+          activateOfflinePreview(teamName);
+        }
+      } catch (e) {
+        isOfflineMode = true;
+        updateVisualStatus(false, "Exception");
+        activateOfflinePreview(teamName);
+      }
+    }
+
+    function activateOfflinePreview(teamName) {
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("board-screen").style.display = "block";
+      document.getElementById("display-team").innerText = "TEAM: " + teamName.toUpperCase();
+      
+      questionsData = localQuestionsBackup;
+      gameStateData = {};
+      questionsData.forEach(q => {
+        gameStateData[q.id] = { question_id: q.id, status: 'open', locked_by: null, failed_teams: [] };
+      });
+
+      buildMatrix();
+      calculateAllScores();
+    }
+
+    async function loadInitialData() {
+      const { data: qData, error: qError } = await supabaseClientInstance.from("jeopardy_questions").select("*");
+      if (qError) throw qError;
+      questionsData = qData || [];
+
+      const { data: sData, error: sError } = await supabaseClientInstance.from("jeopardy_game_state").select("*");
+      if (sError) throw sError;
+      
+      gameStateData = {};
+      if (sData && sData.length > 0) {
+        sData.forEach(state => {
+          gameStateData[state.question_id] = state;
+        });
+      } else {
+        questionsData.forEach(q => {
+          gameStateData[q.id] = { question_id: q.id, status: 'open', locked_by: null, failed_teams: [] };
+        });
+      }
+      calculateAllScores();
+    }
+
+    function calculateAllScores() {
+      let teamScores = { Hopfen: 0, Malz: 0, Bier: 0, Durst: 0 };
+      
+      if (questionsData && questionsData.length > 0) {
+        Object.values(gameStateData).forEach(state => {
+          if (state && state.status === 'solved' && state.locked_by && teamScores[state.locked_by] !== undefined) {
+            const frag = questionsData.find(q => q.id === state.question_id);
+            if (frag) teamScores[state.locked_by] += frag.points;
+          }
+        });
+      }
+
+      myScore = teamScores[currentTeam] || 0;
+      document.getElementById("display-score").innerText = `Score: ${myScore} Punkte`;
+
+      const leaderboardContainer = document.getElementById("leaderboard-container");
+      if (!leaderboardContainer) return;
+      leaderboardContainer.innerHTML = "";
+
+      const sortedTeams = Object.keys(teamScores).sort((a, b) => teamScores[b] - teamScores[a]);
+
+      sortedTeams.forEach((team) => {
+        const chip = document.createElement("div");
+        chip.className = "leaderboard-chip";
+        if (team === currentTeam) chip.classList.add("my-team");
+
+        let icon = team === "Hopfen" ? "🌾" : team === "Malz" ? "🪵" : team === "Bier" ? "🍺" : "🔥";
+        chip.innerHTML = `${icon} Team ${team}: <span class="score-val">${teamScores[team]}</span>`;
+        leaderboardContainer.appendChild(chip);
+      });
+
+      const tbody = document.getElementById("score-table-body");
+      if (tbody) {
+        tbody.innerHTML = "";
+        sortedTeams.forEach((team, index) => {
+          tbody.innerHTML += `<tr><td>#${index + 1}</td><td>Team ${team}</td><td>${teamScores[team]}</td></tr>`;
+        });
+      }
+    }
+
+    function setupRealtime() {
+      if(!supabaseClientInstance) return;
+      realtimeChannel = supabaseClientInstance
+        .channel('schema-db-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'jeopardy_game_state' }, (payload) => {
+          if (!payload.new) return;
+          const updatedState = payload.new;
+          gameStateData[updatedState.question_id] = updatedState;
+          
+          if (activeQuestion && activeQuestion.id === updatedState.question_id) {
+            if (updatedState.status === 'solved' && updatedState.locked_by !== currentTeam) {
+              closeQuestionView();
+            }
+          }
+          calculateAllScores();
+          buildMatrix();
+          checkGameEnd();
+        })
+        .subscribe();
+    }
+
+    function buildMatrix() {
+      const container = document.getElementById("matrix-container");
+      container.innerHTML = "";
+
+      categories.forEach(cat => {
+        const headerDiv = document.createElement("div");
+        headerDiv.className = "category-title";
+        headerDiv.innerText = cat === "Rubrik 4" ? "Geografie" : cat === "Rubrik 5" ? "Unnützes Wissen" : cat;
+        container.appendChild(headerDiv);
+      });
+
+      for (let p = 1; p <= 5; p++) {
+        categories.forEach(cat => {
+          const question = questionsData.find(q => q.category === cat && q.points === p);
+          const cell = document.createElement("div");
+          cell.className = "matrix-cell";
+          cell.innerText = p;
+
+          if (question) {
+            const state = gameStateData[question.id] || { status: 'open', failed_teams: [] };
+            if (state.status === 'solved') cell.classList.add("solved");
+            else if (state.status === 'locked' && state.locked_by !== currentTeam) cell.classList.add("locked");
+            else if (state.failed_teams && state.failed_teams.includes(currentTeam)) cell.classList.add("failed");
+            else cell.onclick = () => openQuestion(question.id);
+          } else {
+            cell.innerText = "-";
+            cell.style.opacity = "0.3";
+          }
+          container.appendChild(cell);
+        });
+      }
+    }
+
+    async function openQuestion(questionId) {
+      const question = questionsData.find(q => q.id === questionId);
+      if (!question) return;
+
+      if (isOfflineMode || !supabaseClientInstance) {
+        showQuestionView(question);
+        return;
+      }
+
+      const { data, error } = await supabaseClientInstance
+        .from("jeopardy_game_state")
+        .update({ status: 'locked', locked_by: currentTeam })
+        .eq('question_id', questionId)
+        .eq('status', 'open') 
+        .select();
+
+      if (error || !data || data.length === 0) {
+        alert("🔒 Dieses Feld wird bereits von einem anderen Team bearbeitet!");
+        const { data: latestState } = await supabaseClientInstance.from("jeopardy_game_state").select("*").eq('question_id', questionId);
+        if (latestState && latestState[0]) {
+          gameStateData[questionId] = latestState[0];
+          buildMatrix();
+        }
+        return; 
+      }
+      
+      showQuestionView(question);
+    }
+
+    function showQuestionView(question) {
+      activeQuestion = question;
+      document.getElementById("board-screen").style.display = "none";
+      document.getElementById("question-screen").style.display = "block";
+      
+      const readableCat = question.category === "Rubrik 4" ? "Geografie" : question.category === "Rubrik 5" ? "Unnützes Wissen" : question.category;
+      document.getElementById("question-info").innerText = `${readableCat} - Für ${question.points} Punkt(e)`;
+      document.getElementById("active-question-text").innerText = question.question;
+
+      const answers = [question.answer_a, question.answer_b, question.answer_c, question.answer_d];
+      const ansContainer = document.getElementById("answers-container");
+      ansContainer.innerHTML = "";
+
+      answers.forEach(ans => {
+        const btn = document.createElement("button");
+        btn.className = "answer-btn";
+        btn.innerText = ans;
+        btn.onclick = () => submitAnswer(ans);
+        ansContainer.appendChild(btn);
+      });
+    }
+
+    async function submitAnswer(selectedAnswer) {
+      if (!activeQuestion) return;
+      
+      const isCorrect = (selectedAnswer === activeQuestion.correct_answer);
+      const buttons = document.querySelectorAll('.answer-btn');
+      
+      buttons.forEach(btn => {
+        btn.disabled = true; 
+        if (btn.innerText === activeQuestion.correct_answer) {
+          btn.style.background = "var(--success)";
+          btn.style.borderColor = "var(--success)";
+          btn.style.color = "var(--text-dark)";
+        }
+        if (btn.innerText === selectedAnswer && !isCorrect) {
+          btn.style.background = "var(--danger)";
+          btn.style.borderColor = "var(--danger)";
+          btn.style.color = "#fff";
+        }
+        btn.onclick = null;
+      });
+      
+      if (isOfflineMode || !supabaseClientInstance) {
+        if (isCorrect) {
+          gameStateData[activeQuestion.id].status = 'solved';
+          gameStateData[activeQuestion.id].locked_by = currentTeam;
+        } else {
+          gameStateData[activeQuestion.id].failed_teams.push(currentTeam);
+        }
+        
+        calculateAllScores();
+        
+        setTimeout(() => {
+          closeQuestionView();
+          buildMatrix();
+          checkGameEnd();
+        }, 3000);
+        return;
+      }
+
+      const state = gameStateData[activeQuestion.id];
+      let updatedFailed = state.failed_teams || [];
+      if (!updatedFailed.includes(currentTeam)) updatedFailed.push(currentTeam);
+      const nextStatus = (updatedFailed.length >= 4) ? 'solved' : 'open';
+
+      if (isCorrect) {
+        await supabaseClientInstance.from("jeopardy_game_state").update({ status: 'solved', locked_by: currentTeam }).eq('question_id', activeQuestion.id);
+      } else {
+        await supabaseClientInstance.from("jeopardy_game_state").update({ 
+          status: nextStatus, locked_by: (nextStatus === 'solved' ? 'NIEMAND' : null), failed_teams: updatedFailed 
+        }).eq('question_id', activeQuestion.id);
+      }
+
+      calculateAllScores();
+      buildMatrix();
+
+      setTimeout(() => {
+        closeQuestionView();
+      }, 3000);
+    }
+
+    function closeQuestionView() {
+      activeQuestion = null;
+      document.getElementById("question-screen").style.display = "none";
+      document.getElementById("board-screen").style.display = "block";
+    }
+
+    function checkGameEnd() {
+      const totalQuestions = questionsData.length;
+      if (totalQuestions === 0) return;
+      const solvedCount = Object.values(gameStateData).filter(s => s.status === 'solved').length;
+      if (solvedCount === totalQuestions) finishJeopardyGame();
+    }
+
+    async function finishJeopardyGame() {
+      if (realtimeChannel) realtimeChannel.unsubscribe();
+      document.getElementById("board-screen").style.display = "none";
+      document.getElementById("question-screen").style.display = "none";
+      document.getElementById("end-screen").style.display = "block";
+    }
+  </script>
+</body>
+</html>
