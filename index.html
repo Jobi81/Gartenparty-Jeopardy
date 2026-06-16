@@ -30,24 +30,33 @@
       overflow-x: hidden;
     }
 
-    /* Der funkelnde Bierglas-Sternen-Hintergrund von gestern Abend */
+    /* Der echte funkelnde Bierglas-Sternen-Hintergrund */
     body::before {
       content: "";
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       background-image: 
-        radial-gradient(circle, rgba(255, 204, 0, 0.15) 2px, transparent 40px),
-        radial-gradient(circle, rgba(0, 242, 254, 0.1) 2px, transparent 30px);
-      background-size: 550px 550px, 350px 350px;
-      background-position: 0 0, 150px 150px;
+        radial-gradient(circle, #ffcc00 2px, transparent 40px),
+        radial-gradient(circle, #ffcc00 1.5px, transparent 30px),
+        radial-gradient(circle, #00f2fe 1px, transparent 20px);
+      background-size: 150px 150px, 200px 200px, 300px 300px;
+      background-position: 0 0, 50px 70px, 120px 40px;
       z-index: -1;
-      animation: backgroundflicker 6s infinite alternate ease-in-out;
+      animation: bubbleUp 8s infinite linear;
     }
 
-    @keyframes backgroundflicker {
-      0% { opacity: 0.6; transform: scale(1); }
-      50% { opacity: 0.9; transform: scale(1.02); }
-      100% { opacity: 0.7; transform: scale(0.98); }
+    @keyframes bubbleUp {
+      0% {
+        background-position: 0 0, 50px 70px, 120px 40px;
+        opacity: 0.4;
+      }
+      50% {
+        opacity: 0.8;
+      }
+      100% {
+        background-position: 0 -150px, 50px -130px, 120px -260px;
+        opacity: 0.4;
+      }
     }
 
     h1 {
@@ -132,7 +141,6 @@
 
   <div id="net-indicator" class="network-status status-offline">Prüfe Verbindung...</div>
   
-  <!-- Startbildschirm: Teamauswahl -->
   <div id="login-screen">
     <h2 style="text-align:center; color:var(--cyan-neon); margin-top:0;">Wähle dein Team</h2>
     <button class="team-btn" onclick="loginTeam('Hopfen')">Team Hopfen</button>
@@ -141,14 +149,12 @@
     <button class="team-btn" onclick="loginTeam('Durst')">Team Durst</button>
   </div>
 
-  <!-- Spielfeld (Board) -->
   <div id="board-screen">
     <h1>Gartenparty Jeopardy PRO</h1>
     <div id="display-team"></div>
     <div class="jeopardy-grid" id="matrix-container"></div>
   </div>
 
-  <!-- Frage-Fenster -->
   <div id="question-modal">
     <h2 id="q-text"></h2>
     <div id="answers-container"></div>
@@ -160,7 +166,6 @@
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mjg5ODIsImV4cCI6MjA5NzEwNDk4Mn0.njbnA14y98wuVdoPJHlk3tsBBQcOCC4A0nOfBUrlqzQ";
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    // Live-Verbindungscheck direkt beim Laden der Seite
     window.onload = async () => {
       try {
         const { error } = await supabaseClient.from("jeopardy_questions").select("id", { count: 'exact', head: true });
@@ -169,7 +174,7 @@
           document.getElementById('net-indicator').innerText = "🟢 LIVE-MODUS";
         }
       } catch (e) {
-        console.error("Verbindung zu Supabase blockiert oder fehlgeschlagen.");
+        console.error("Verbindung zu Supabase fehlgeschlagen.");
       }
     };
 
@@ -191,10 +196,8 @@
       const container = document.getElementById('matrix-container');
       container.innerHTML = "";
       
-      // Die 5 gewünschten Rubriken
       const catMap = ["Abkürzungen", "Bierländer", "Fussball-WM", "Geografie", "Unnützes Wissen"];
       
-      // Header zeichnen
       catMap.forEach(cat => {
         let div = document.createElement('div');
         div.className = 'category-title';
@@ -202,10 +205,8 @@
         container.appendChild(div);
       });
 
-      // Zellen von 1 bis 5 Punkten einreihen
       for (let p = 1; p <= 5; p++) {
         catMap.forEach(cat => {
-          // Extrem toleranter Abgleich, falls in der DB Leerzeichen oder abweichende Groß/Kleinschreibung genutzt wurden
           const q = questions.find(item => 
             item.points == p && 
             item.category.trim().toLowerCase() === cat.toLowerCase()
@@ -247,7 +248,6 @@
                }
              });
           }
-          // Nach 3 Sekunden schließt sich das Fenster automatisch
           setTimeout(() => { document.getElementById('question-modal').style.display = 'none'; }, 3000);
         };
         container.appendChild(btn);
