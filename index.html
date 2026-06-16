@@ -7,7 +7,7 @@
   <style>
     :root { --bg: #0f0f1a; --card: rgba(22, 22, 39, 0.75); --accent: #ffcc00; --cyan: #00f2fe; }
     body { font-family: sans-serif; background: var(--bg); color: white; text-align: center; margin: 0; padding: 20px; }
-    .network-status { position: fixed; top: 10px; left: 10px; padding: 5px 10px; border-radius: 15px; font-size: 10px; }
+    .network-status { position: fixed; top: 10px; left: 10px; padding: 5px 10px; border-radius: 15px; font-size: 10px; z-index: 9999; }
     .status-online { background: rgba(0, 255, 204, 0.2); color: #00ffcc; }
     .status-offline { background: rgba(255, 51, 51, 0.2); color: #ff3333; }
     .jeopardy-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 900px; margin: 20px auto; }
@@ -35,7 +35,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const supabaseUrl = "https://accjeyhsrghbxezyboxt.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mjg5ODIsImV4cCI6MjA5NzEwNDk4Mn0.njbnA14y98wuVdoPJHlk3tsBBQcOCC4A0nOfBUrlqzQ"; // <- Hier wieder den langen Key rein!
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mjg5ODIsImV4cCI6MjA5NzEwNDk4Mn0.njbnA14y98wuVdoPJHlk3tsBBQcOCC4A0nOfBUrlqzQ";
     let supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     async function loginTeam(teamName) {
@@ -50,6 +50,7 @@
         document.getElementById('net-indicator').innerText = "🟢 LIVE-MODUS";
         buildMatrix(data);
       } catch (e) {
+        document.getElementById('net-indicator').className = "network-status status-offline";
         document.getElementById('net-indicator').innerText = "🔴 FEHLER: " + e.message;
         console.error(e);
       }
@@ -58,14 +59,12 @@
     function buildMatrix(questions) {
       const container = document.getElementById('matrix-container');
       container.innerHTML = "";
-      // Dummy-Header
       for(let i=0; i<5; i++) {
         let div = document.createElement('div');
         div.className = 'category-title';
         div.innerText = "Rubrik " + (i+1);
         container.appendChild(div);
       }
-      // Dummy-Zellen
       for(let i=0; i<25; i++) {
         let div = document.createElement('div');
         div.className = 'matrix-cell';
