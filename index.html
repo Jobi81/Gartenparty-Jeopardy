@@ -195,11 +195,48 @@
       max-width: 1200px;
       margin: 0 auto 30px auto;
       background: var(--card-bg);
-      padding: 20px 30px;
+      padding: 15px 30px;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,0.05);
       backdrop-filter: blur(10px);
       box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .header-side {
+      flex: 1;
+      text-align: left;
+    }
+    .header-side.right {
+      text-align: right;
+    }
+
+    .live-scoreboard-mini {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      background: rgba(0,0,0,0.3);
+      padding: 10px 20px;
+      border-radius: 30px;
+      border: 1px solid rgba(255,255,255,0.05);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .mini-score-tag {
+      color: var(--text-muted);
+      transition: all 0.3s ease;
+    }
+    .mini-score-tag span {
+      color: #fff;
+      font-weight: 700;
+    }
+    .mini-score-tag.active-tag {
+      color: var(--cyan-neon);
+      text-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+    }
+    .mini-score-tag.active-tag span {
+      color: var(--accent-color);
     }
 
     .jeopardy-grid {
@@ -441,15 +478,20 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.03);
     }
 
+    @media (max-width: 992px) {
+      .board-header { flex-direction: column; gap: 15px; text-align: center; }
+      .header-side { text-align: center !important; }
+    }
+
     @media (max-width: 768px) {
       .jeopardy-grid { grid-template-columns: 1fr; }
       .answers-grid { grid-template-columns: 1fr; }
       .category-title { margin-top: 15px; }
       .category-title:first-child { margin-top: 0; }
-      .board-header { flex-direction: column; gap: 15px; text-align: center; }
       .question-box { padding: 25px; }
       .question-text { font-size: 20px; }
       .answer-btn { font-size: 16px; padding: 18px; }
+      .live-scoreboard-mini { flex-wrap: wrap; gap: 10px; }
     }
   </style>
 </head>
@@ -465,7 +507,7 @@
       <h3>Willkommen beim Echtzeit-Jeopardy! 🧠</h3>
       <p>
         Vor euch liegt die große Quiz-Matrix. Alle Teams spielen <strong>gleichzeitig</strong> und wählen frei aus den 5 Rubriken. 
-        Die Zahlen verraten die Wertigkeit: Eine 1 gibt 1 Punkt, eine 5 bringt satte 5 Punkte!<br><br>
+        Die Zahlen verraten die Wertigkeit: Eine 1 gibt 1 Point, eine 5 bringt satte 5 Points!<br><br>
         <strong>Aber Achtung:</strong> Sobald ein Team einen Umschlag öffnet, ist er für alle anderen gesperrt. 
         Löst ihr falsch, wird die Frage für die Konkurrenz wieder freigegeben – für euch bleibt sie jedoch dicht. Viel Erfolg!
       </p>
@@ -484,9 +526,20 @@
 
   <div id="board-screen">
     <div class="board-header">
-      <h3 id="display-team" style="color: var(--cyan-neon); margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 1px;"></h3>
-      <h2 style="margin: 0; font-weight: 800; letter-spacing: 2px; font-size: 24px;">GARTENPARTY JEOPARDY</h2>
-      <h3 id="display-score" style="margin: 0; font-size: 22px; color: var(--accent-color); font-weight: 700;">Score: 0 Punkte</h3>
+      <div class="header-side">
+        <h3 id="display-team" style="color: var(--cyan-neon); margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 1px;"></h3>
+      </div>
+      
+      <div class="live-scoreboard-mini" id="mini-scoreboard">
+        <div class="mini-score-tag" id="tag-Hopfen">🌾 Hopfen: <span id="val-Hopfen">0</span></div>
+        <div class="mini-score-tag" id="tag-Malz">🪵 Malz: <span id="val-Malz">0</span></div>
+        <div class="mini-score-tag" id="tag-Bier">🍺 Bier: <span id="val-Bier">0</span></div>
+        <div class="mini-score-tag" id="tag-Durst">🔥 Durst: <span id="val-Durst">0</span></div>
+      </div>
+
+      <div class="header-side right">
+        <h3 id="display-score" style="margin: 0; font-size: 20px; color: var(--accent-color); font-weight: 700;">Score: 0 Punkte</h3>
+      </div>
     </div>
     <div class="jeopardy-grid" id="matrix-container"></div>
   </div>
@@ -585,11 +638,12 @@
     function setupLobbyRealtime() {
       lobbyChannel = supabaseClientInstance
         .channel('lobby-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'jeopardy_logins' }, () => {
-          // 200ms Verzögerung, um sicherzustellen, dass die Replikation auf allen Clients vollständig ist
-          setTimeout(async () => {
-            await checkLobbyStatus();
-          }, 200);
+        .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
+          if (payload.table === 'jeopardy_logins') {
+            setTimeout(async () => {
+              await checkLobbyStatus();
+            }, 150);
+          }
         })
         .subscribe();
     }
@@ -669,6 +723,10 @@
         document.getElementById("login-screen").style.display = "none";
         document.getElementById("board-screen").style.display = "block";
         document.getElementById("display-team").innerText = "TEAM: " + currentTeam.toUpperCase();
+        
+        const myTag = document.getElementById(`tag-${currentTeam}`);
+        if (myTag) myTag.classList.add("active-tag");
+
         buildMatrix();
         setupRealtime();
       } catch (err) {
@@ -688,19 +746,28 @@
       sData.forEach(state => {
         gameStateData[state.question_id] = state;
       });
-      calculateMyScore();
+      updateAllScores();
     }
 
-    function calculateMyScore() {
-      myScore = 0;
-      if (!questionsData || questionsData.length === 0) return;
-      Object.values(gameStateData).forEach(state => {
-        if (state && state.status === 'solved' && state.locked_by === currentTeam) {
-          const frag = questionsData.find(q => q.id === state.question_id);
-          if (frag) myScore += frag.points;
-        }
-      });
+    function updateAllScores() {
+      const globalScores = { Hopfen: 0, Malz: 0, Bier: 0, Durst: 0 };
+      
+      if (questionsData && questionsData.length > 0) {
+        Object.values(gameStateData).forEach(state => {
+          if (state && state.status === 'solved' && globalScores.hasOwnProperty(state.locked_by)) {
+            const frag = questionsData.find(q => q.id === state.question_id);
+            if (frag) globalScores[state.locked_by] += frag.points;
+          }
+        });
+      }
+
+      myScore = globalScores[currentTeam] || 0;
       document.getElementById("display-score").innerText = `Score: ${myScore} Punkte`;
+
+      for (const team in globalScores) {
+        const scoreEl = document.getElementById(`val-${team}`);
+        if (scoreEl) scoreEl.innerText = globalScores[team];
+      }
     }
 
     function setupRealtime() {
@@ -719,7 +786,7 @@
               closeQuestionView();
             }
           }
-          calculateMyScore();
+          updateAllScores();
           buildMatrix();
           checkGameEnd();
         })
@@ -820,7 +887,7 @@
       document.getElementById("question-screen").style.display = "block";
       
       const readableCat = question.category === "Rubrik 4" ? "Geografie" : question.category === "Rubrik 5" ? "Unnützes Wissen" : question.category;
-      document.getElementById("question-info").innerText = `${readableCat} - Für ${question.points} Punkt(e)`;
+      document.getElementById("question-info").innerText = `${readableCat} - Für ${question.points} Point(e)`;
       document.getElementById("active-question-text").innerText = question.question;
 
       const answers = [question.answer_a, question.answer_b, question.answer_c, question.answer_d];
