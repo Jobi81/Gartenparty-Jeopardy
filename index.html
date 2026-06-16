@@ -503,7 +503,6 @@
       { id: 25, category: "Rubrik 5", points: 5, question: "Welches weltbekannte Lebensmittel ist das einzige, das unter normalen Bedingungen niemals verdirbt?", answer_a: "Honig", answer_b: "Weißer Reis", answer_c: "Ahornsirup", answer_d: "Olivenöl", correct_answer: "Honig" }
     ];
 
-    // --- BIERGLÄSER-GENERATOR ---
     function createBeerStars() {
       const container = document.getElementById('star-container');
       if (!container) return;
@@ -535,7 +534,6 @@
       }
     }
 
-    // Live-Verbindungscheck direkt beim Laden der Seite
     window.onload = async () => {
       createBeerStars();
       
@@ -702,17 +700,49 @@
         return;
       }
 
-      const { data, error } = await supabaseClientInstance
-        .from("jeopardy_game_state")
-        .update({ status: 'locked', locked_by: currentTeam })
-        .eq('question_id', questionId)
-        .eq('status', 'open') 
-        .select();
+      try {
+        // 1. BLITZ-CHECK: Vor dem Öffnen prüfen, ob die Frage auf dem Server noch 'open' ist
+        const { data: currentCheck, error: checkError } = await supabaseClientInstance
+          .from("jeopardy_game_state")
+          .select("*")
+          .eq('question_id', questionId)
+          .single();
 
-      if (error || !data || data.length === 0) {
-        return;
+        if (checkError) throw checkError;
+
+        // Falls die Frage in genau dieser Sekunde vergeben wurde, Klick abbrechen
+        if (currentCheck && currentCheck.status !== 'open') {
+          gameStateData[questionId] = currentCheck;
+          buildMatrix();
+          return; 
+        }
+
+        // 2. ABSOLUTE LIVE-SPERRE: Nur überschreiben, wenn der Status zeitgleich immer noch 'open' ist
+        const { data, error } = await supabaseClientInstance
+          .from("jeopardy_game_state")
+          .update({ status: 'locked', locked_by: currentTeam })
+          .eq('question_id', questionId)
+          .eq('status', 'open') 
+          .select();
+
+        // Wenn das Update fehlschlägt oder kein Datensatz zurückkommt, war ein anderes Team schneller
+        if (error || !data || data.length === 0) {
+          const { data: updatedCheck } = await supabaseClientInstance
+            .from("jeopardy_game_state")
+            .select("*")
+            .eq('question_id', questionId)
+            .single();
+          if (updatedCheck) gameStateData[questionId] = updatedCheck;
+          buildMatrix();
+          return;
+        }
+
+        // Nur bei erfolgreicher Sperrung wird die Frage geöffnet
+        showQuestionView(question);
+
+      } catch (err) {
+        console.error("Fehler bei der Live-Synchronisation der Sperre:", err);
       }
-      showQuestionView(question);
     }
 
     function showQuestionView(question) {
