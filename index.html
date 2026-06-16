@@ -73,7 +73,7 @@
       50% { opacity: 0.45; transform: scale(1.4) rotate(8deg); }
     }
 
-    #login-screen, #board-screen, #question-screen, #end-screen {
+    #login-screen, #board-screen, #question-screen, #end-screen, #custom-alert {
       position: relative;
       z-index: 1;
       display: none;
@@ -195,7 +195,7 @@
       max-width: 1200px;
       margin: 0 auto 30px auto;
       background: var(--card-bg);
-      padding: 15px 30px;
+      padding: 18px 30px;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,0.05);
       backdrop-filter: blur(10px);
@@ -212,31 +212,38 @@
 
     .live-scoreboard-mini {
       display: flex;
-      gap: 15px;
+      gap: 20px;
       justify-content: center;
-      background: rgba(0,0,0,0.3);
-      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 12px 28px;
       border-radius: 30px;
-      border: 1px solid rgba(255,255,255,0.05);
-      font-size: 13px;
-      font-weight: 600;
+      border: 1px solid rgba(255, 204, 0, 0.2);
+      font-size: 16px;
+      font-weight: 700;
       letter-spacing: 0.5px;
+      box-shadow: 0 0 15px rgba(255, 204, 0, 0.05);
     }
 
     .mini-score-tag {
-      color: var(--text-muted);
-      transition: all 0.3s ease;
+      color: var(--text-light);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 10px;
+      border-radius: 12px;
+      transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
     .mini-score-tag span {
-      color: #fff;
-      font-weight: 700;
+      color: var(--accent-color);
+      font-weight: 800;
+      background: rgba(255,255,255,0.05);
+      padding: 2px 8px;
+      border-radius: 6px;
     }
     .mini-score-tag.active-tag {
-      color: var(--cyan-neon);
-      text-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
-    }
-    .mini-score-tag.active-tag span {
-      color: var(--accent-color);
+      background: rgba(0, 242, 254, 0.15);
+      border: 1px solid rgba(0, 242, 254, 0.3);
+      box-shadow: 0 0 10px rgba(0, 242, 254, 0.2);
     }
 
     .jeopardy-grid {
@@ -296,7 +303,6 @@
       background: rgba(255, 170, 0, 0.05);
       color: rgba(255, 170, 0, 0.2);
       border-color: rgba(255, 170, 0, 0.2);
-      cursor: not-allowed;
       text-shadow: none;
     }
     .matrix-cell.locked::after {
@@ -333,7 +339,6 @@
       background: rgba(255, 204, 0, 0.1);
       color: #ffaa00;
       border-color: rgba(255, 170, 0, 0.5);
-      cursor: not-allowed;
       text-shadow: 0 0 12px rgba(255, 170, 0, 0.3);
       box-shadow: inset 0 0 15px rgba(255, 170, 0, 0.05);
     }
@@ -438,44 +443,138 @@
       opacity: 0.7;
     }
 
-    .podium-card {
-      max-width: 650px;
+    /* --- INTERNES HINWEISFENSTER (POPUP) --- */
+    .alert-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(5, 5, 10, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .alert-modal {
+      background: #161627;
+      border: 2px solid var(--accent-color);
+      border-radius: 16px;
+      padding: 35px;
+      max-width: 420px;
+      width: 90%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 30px rgba(255, 204, 0, 0.1);
+      text-align: center;
+    }
+    .alert-modal h3 {
+      margin-top: 0;
+      color: var(--accent-color);
+      font-size: 24px;
+      letter-spacing: 1px;
+    }
+    .alert-modal p {
+      font-size: 17px;
+      line-height: 1.5;
+      color: var(--text-light);
+      margin: 20px 0 30px 0;
+    }
+    .alert-btn {
+      background: linear-gradient(to right, var(--accent-color), #ff9900);
+      color: var(--text-dark);
+      border: none;
+      padding: 12px 35px;
+      font-size: 16px;
+      font-weight: 800;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(255, 204, 0, 0.3);
+      transition: all 0.2s ease;
+    }
+    .alert-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(255, 204, 0, 0.5);
+    }
+
+    /* --- VISUELLES ENDPODIUM --- */
+    .podium-container {
+      max-width: 800px;
       margin: 40px auto;
       background: var(--card-bg);
-      padding: 45px;
+      padding: 50px 40px;
       border-radius: 24px;
       box-shadow: 0 40px 80px rgba(0,0,0,0.6);
       border: 1px solid var(--card-border); 
       backdrop-filter: blur(15px);
     }
-
-    .score-table {
-      width: 100%;
-      margin: 30px auto 10px auto;
-      border-collapse: collapse;
-      font-size: 20px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 12px;
-      overflow: hidden;
+    .final-ranks-list {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
-
-    .score-table th, .score-table td {
-      padding: 18px 25px;
-      text-align: left;
+    .rank-row {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 16px;
+      padding: 18px 30px;
+      transition: all 0.4s ease;
     }
-
-    .score-table th {
-      background-color: rgba(15, 15, 26, 0.8);
-      color: var(--cyan-neon);
+    .rank-badge {
+      font-size: 24px;
+      font-weight: 900;
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 25px;
+    }
+    .rank-1 {
+      background: linear-gradient(135deg, #ffe066 0%, #f5b041 100%);
+      color: #513600;
+      box-shadow: 0 0 20px rgba(245, 176, 65, 0.4);
+      border: 2px solid #fff;
+    }
+    .rank-2 {
+      background: linear-gradient(135deg, #e5e8e8 0%, #bdc3c7 100%);
+      color: #2c3e50;
+      box-shadow: 0 0 15px rgba(189, 195, 199, 0.3);
+    }
+    .rank-3 {
+      background: linear-gradient(135deg, #edbb99 0%, #dc7633 100%);
+      color: #5e2700;
+      box-shadow: 0 0 12px rgba(220, 118, 51, 0.3);
+    }
+    .rank-4 {
+      background: rgba(255,255,255,0.1);
+      color: var(--text-muted);
+    }
+    .rank-name {
+      font-size: 22px;
       font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-size: 15px;
-      border-bottom: 1px solid rgba(0, 242, 254, 0.2);
+      flex-grow: 1;
+      text-align: left;
+      letter-spacing: 0.5px;
     }
-
-    .score-table td {
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    .rank-row.highlight-my-team {
+      border-color: var(--cyan-neon);
+      background: rgba(0, 242, 254, 0.06);
+      box-shadow: inset 0 0 15px rgba(0, 242, 254, 0.05);
+    }
+    .rank-row.highlight-my-team .rank-name {
+      color: var(--cyan-neon);
+    }
+    .rank-score {
+      font-size: 24px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .rank-score span {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-left: 4px;
     }
 
     @media (max-width: 992px) {
@@ -491,7 +590,8 @@
       .question-box { padding: 25px; }
       .question-text { font-size: 20px; }
       .answer-btn { font-size: 16px; padding: 18px; }
-      .live-scoreboard-mini { flex-wrap: wrap; gap: 10px; }
+      .live-scoreboard-mini { gap: 10px; padding: 10px 15px; }
+      .mini-score-tag { font-size: 13px; padding: 2px 6px; }
     }
   </style>
 </head>
@@ -501,13 +601,22 @@
 
   <div class="star-field" id="star-container"></div>
 
+  <!-- HINWEISFENSTER (CUSTOM ALERT MODAL) -->
+  <div id="custom-alert" class="alert-overlay">
+    <div class="alert-modal">
+      <h3>Sperre aktiv! 🔒</h3>
+      <p id="custom-alert-text">Diese Frage wird derzeit von einem anderen Team bearbeitet.</p>
+      <button class="alert-btn" onclick="closeCustomAlert()">OK</button>
+    </div>
+  </div>
+
   <div id="login-screen" style="display: block;">
     <h1>Gartenparty Jeopardy PRO</h1>
     <div class="welcome-text">
       <h3>Willkommen beim Echtzeit-Jeopardy! 🧠</h3>
       <p>
         Vor euch liegt die große Quiz-Matrix. Alle Teams spielen <strong>gleichzeitig</strong> und wählen frei aus den 5 Rubriken. 
-        Die Zahlen verraten die Wertigkeit: Eine 1 gibt 1 Point, eine 5 bringt satte 5 Points!<br><br>
+        Die Zahlen verraten die Wertigkeit: Eine 1 gibt 1 Punkt, eine 5 bringt satte 5 Punkte!<br><br>
         <strong>Aber Achtung:</strong> Sobald ein Team einen Umschlag öffnet, ist er für alle anderen gesperrt. 
         Löst ihr falsch, wird die Frage für die Konkurrenz wieder freigegeben – für euch bleibt sie jedoch dicht. Viel Erfolg!
       </p>
@@ -530,6 +639,7 @@
         <h3 id="display-team" style="color: var(--cyan-neon); margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 1px;"></h3>
       </div>
       
+      <!-- DYNAMISCHES LIVE-SCOREBOARD -->
       <div class="live-scoreboard-mini" id="mini-scoreboard">
         <div class="mini-score-tag" id="tag-Hopfen">🌾 Hopfen: <span id="val-Hopfen">0</span></div>
         <div class="mini-score-tag" id="tag-Malz">🪵 Malz: <span id="val-Malz">0</span></div>
@@ -553,18 +663,17 @@
     </div>
   </div>
 
+  <!-- NEUES OPTISCH ANSPRECHENDES ENDERGEBNIS-PODIUM -->
   <div id="end-screen">
-    <div class="podium-card">
-      <h1 style="font-size: 36px; margin-bottom: 5px; color: #fff;">🏆 ENDERGEBNIS 🏆</h1>
-      <p style="color: var(--text-muted); font-size: 16px; margin-bottom: 25px;">Alle Fragen wurden beantwortet.</p>
+    <div class="podium-container">
+      <h1 style="font-size: 42px; margin-bottom: 5px; color: #fff; text-shadow: 0 0 20px rgba(255,204,0,0.3);">🏆 ENDSTAND 🏆</h1>
+      <p style="color: var(--text-muted); font-size: 18px; margin-bottom: 10px;">Das Spiel ist beendet. Alle Fragen wurden gespielt.</p>
       
-      <table class="score-table" id="final-score-table">
-        <thead>
-          <tr><th>Platz</th><th>Team</th><th>Punkte</th></tr>
-        </thead>
-        <tbody id="score-table-body"></tbody>
-      </table>
-      <p style="font-size: 24px; margin-top: 35px; color: var(--accent-color); letter-spacing: 4px;">✨ GRATULATION ✨</p>
+      <div class="final-ranks-list" id="podium-ranks-target">
+        <!-- Wird dynamisch befüllt -->
+      </div>
+      
+      <p style="font-size: 26px; margin-top: 45px; color: var(--accent-color); letter-spacing: 6px; font-weight: 800; animation: pulseCountdown 1s infinite alternate;">✨ GRATULATION AN ALLE TEAMS ✨</p>
     </div>
   </div>
 
@@ -593,6 +702,7 @@
     function createBeerStars() {
       const container = document.getElementById('star-container');
       if (!container) return;
+      const { clientWidth, clientHeight } = document.documentElement;
       const beerCount = 55; 
       const rhythms = ['twinkle-slow', 'twinkle-mid', 'twinkle-fast'];
 
@@ -621,7 +731,6 @@
 
     window.onload = async () => {
       createBeerStars();
-      
       setupLobbyRealtime();
       await checkLobbyStatus();
       
@@ -642,14 +751,10 @@
 
       lobbyChannel = supabaseClientInstance
         .channel('lobby-room-channel')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'jeopardy_logins' }, (payload) => {
-          console.log("Echtzeit-Event in Lobby empfangen:", payload);
-          // Absolut JEDE Änderung zwingt den Browser zur sofortigen Neu-Überprüfung
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'jeopardy_logins' }, () => {
           checkLobbyStatus();
         })
-        .subscribe((status) => {
-          console.log("Echtzeit Lobby-Kanal aktiv:", status);
-        });
+        .subscribe();
     }
 
     async function checkLobbyStatus() {
@@ -668,9 +773,7 @@
         if (btn) {
           if (loggedTeams.includes(t)) {
             btn.disabled = true;
-            if (currentTeam === t) {
-              btn.classList.add("my-choice");
-            }
+            if (currentTeam === t) btn.classList.add("my-choice");
           } else {
             btn.disabled = (currentTeam !== ""); 
           }
@@ -694,14 +797,13 @@
       
       const btn = document.getElementById(`btn-${teamName}`);
       if (btn) btn.classList.add("my-choice");
-      
       document.getElementById("lobby-msg").innerText = "Übermittle Team-Anmeldung...";
 
       try {
         await supabaseClientInstance.from("jeopardy_logins").insert([{ team_name: teamName }]);
         await checkLobbyStatus();
       } catch (err) {
-        console.error("Fehler beim Login:", err);
+        console.error(err);
       }
     }
 
@@ -759,8 +861,10 @@
       updateAllScores();
     }
 
+    // DYNAMISCHE NEUANORDNUNG (HIGHSCORE LINKS, LOWSCORE RECHTS)
     function updateAllScores() {
       const globalScores = { Hopfen: 0, Malz: 0, Bier: 0, Durst: 0 };
+      const teamIcons = { Hopfen: "🌾", Malz: "🪵", Bier: "🍺", Durst: "🔥" };
       
       if (questionsData && questionsData.length > 0) {
         Object.values(gameStateData).forEach(state => {
@@ -774,10 +878,23 @@
       myScore = globalScores[currentTeam] || 0;
       document.getElementById("display-score").innerText = `Score: ${myScore} Punkte`;
 
-      for (const team in globalScores) {
-        const scoreEl = document.getElementById(`val-${team}`);
-        if (scoreEl) scoreEl.innerText = globalScores[team];
-      }
+      // Array erstellen und absteigend sortieren
+      const sortedTeams = Object.keys(globalScores).map(name => ({
+        name: name,
+        score: globalScores[name]
+      })).sort((a, b) => b.score - a.score);
+
+      // Scoreboard-DOM leeren und dynamisch sortiert neu aufbauen
+      const scoreboardContainer = document.getElementById("mini-scoreboard");
+      scoreboardContainer.innerHTML = "";
+
+      sortedTeams.forEach(item => {
+        const div = document.createElement("div");
+        div.className = `mini-score-tag ${item.name === currentTeam ? 'active-tag' : ''}`;
+        div.id = `tag-${item.name}`;
+        div.innerHTML = `${teamIcons[item.name]} ${item.name}: <span>${item.score}</span>`;
+        scoreboardContainer.appendChild(div);
+      });
     }
 
     function setupRealtime() {
@@ -835,6 +952,8 @@
             }
             else if (state.status === 'locked' && state.locked_by !== currentTeam) {
               cell.classList.add("locked");
+              // INTERNES MODAL TRIGGERS BEIM KLICK AUF FREMDE SPERRE
+              cell.onclick = () => openCustomAlert(`Dieses Feld wird gerade von Team ${state.locked_by.toUpperCase()} bearbeitet!`);
             }
             else if (state.failed_teams && state.failed_teams.includes(currentTeam)) {
               cell.classList.add("failed");
@@ -849,6 +968,15 @@
           container.appendChild(cell);
         });
       }
+    }
+
+    // MODAL FUNKTIONEN
+    function openCustomAlert(msg) {
+      document.getElementById("custom-alert-text").innerText = msg;
+      document.getElementById("custom-alert").style.display = "flex";
+    }
+    function closeCustomAlert() {
+      document.getElementById("custom-alert").style.display = "none";
     }
 
     async function openQuestion(questionId) {
@@ -867,6 +995,9 @@
         if (currentCheck && currentCheck.status !== 'open') {
           gameStateData[questionId] = currentCheck;
           buildMatrix();
+          if (currentCheck.status === 'locked' && currentCheck.locked_by !== currentTeam) {
+            openCustomAlert(`Dieses Feld wird gerade von Team ${currentCheck.locked_by.toUpperCase()} bearbeitet!`);
+          }
           return; 
         }
 
@@ -897,7 +1028,7 @@
       document.getElementById("question-screen").style.display = "block";
       
       const readableCat = question.category === "Rubrik 4" ? "Geografie" : question.category === "Rubrik 5" ? "Unnützes Wissen" : question.category;
-      document.getElementById("question-info").innerText = `${readableCat} - Für ${question.points} Point(e)`;
+      document.getElementById("question-info").innerText = `${readableCat} - Für ${question.points} Punkte`;
       document.getElementById("active-question-text").innerText = question.question;
 
       const answers = [question.answer_a, question.answer_b, question.answer_c, question.answer_d];
@@ -965,16 +1096,55 @@
       if (solvedCount === totalQuestions) finishJeopardyGame();
     }
 
+    // NEUE OPTISCH ANSPRECHENDE ENDSEITE (FEIERLICHES SIGES-PODIUM)
     async function finishJeopardyGame() {
       if (realtimeChannel) realtimeChannel.unsubscribe();
       document.getElementById("board-screen").style.display = "none";
       document.getElementById("question-screen").style.display = "none";
       document.getElementById("end-screen").style.display = "block";
 
+      // Eigenen Score final übertragen
       await supabaseClientInstance.from("jeopardy_scores").insert([{ team_name: currentTeam, score: myScore }]);
 
-      const tbody = document.getElementById("score-table-body");
-      tbody.innerHTML = `<tr><td>#1</td><td>${currentTeam}</td><td>${myScore}</td></tr>`;
+      // Alle Scores final berechnen
+      const finalScores = { Hopfen: 0, Malz: 0, Bier: 0, Durst: 0 };
+      const teamIcons = { Hopfen: "🌾", Malz: "🪵", Bier: "🍺", Durst: "🔥" };
+      
+      Object.values(gameStateData).forEach(state => {
+        if (state && state.status === 'solved' && finalScores.hasOwnProperty(state.locked_by)) {
+          const frag = questionsData.find(q => q.id === state.question_id);
+          if (frag) finalScores[state.locked_by] += frag.points;
+        }
+      });
+
+      // Teams in eine sortierte Rangliste überführen
+      const finalRankings = Object.keys(finalScores).map(name => ({
+        name: name,
+        score: finalScores[name]
+      })).sort((a, b) => b.score - a.score);
+
+      // Siges-Podium generieren
+      const podiumTarget = document.getElementById("podium-ranks-target");
+      podiumTarget.innerHTML = "";
+
+      finalRankings.forEach((team, index) => {
+        const place = index + 1;
+        const row = document.createElement("div");
+        row.className = `rank-row ${team.name === currentTeam ? 'highlight-my-team' : ''}`;
+        
+        let badgeClass = "rank-4";
+        let badgeContent = place;
+        if (place === 1) { badgeClass = "rank-1"; badgeContent = "🥇"; }
+        else if (place === 2) { badgeClass = "rank-2"; badgeContent = "🥈"; }
+        else if (place === 3) { badgeClass = "rank-3"; badgeContent = "🥉"; }
+
+        row.innerHTML = `
+          <div class="rank-badge ${badgeClass}">${badgeContent}</div>
+          <div class="rank-name">${teamIcons[team.name]} TEAM ${team.name.toUpperCase()} ${team.name === currentTeam ? '(Ihr)' : ''}</div>
+          <div class="rank-score">${team.score}<span>Punkte</span></div>
+        `;
+        podiumTarget.appendChild(row);
+      });
     }
   </script>
 </body>
