@@ -579,9 +579,10 @@
     let realtimeChannel = null;
     let lobbyChannel = null;
     let countdownActive = false;
+    let countdownInterval = null;
     
     const supabaseUrl = "https://accjeyhsrghbxezyboxt.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mjg5ODIsImV4cCI6MjA5NzEwNDk4Mn0.njbnA14y98wuVdoPJHlk3tsBBQcOCC4A0nOfBUrlqzQ".trim();
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mjg5ODIsImV4cCI6MjA5NzEwNDk4Mn0.njbnA14y98wuVdoPJHlk3tsBBQcOCC4A0nOfBUrlqzQ";
     
     const supabaseClientInstance = window.supabase.createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false, autoRefreshToken: false }
@@ -618,16 +619,13 @@
       }
     }
 
-    // Sofort beim Laden ausführen
     window.onload = async () => {
       createBeerStars();
       
-      // WICHTIG: Die Echtzeit-Lobby wird SOFORT gestartet, komplett unabhängig vom Laden der Fragen
       setupLobbyRealtime();
       await checkLobbyStatus();
       
       try {
-        // Erst hier prüfen wir die Verbindung im Hintergrund
         const { error } = await supabaseClientInstance.from("jeopardy_questions").select("id", { count: 'head', head: true });
         if (!error) {
           document.getElementById('net-indicator').className = "network-status status-online";
@@ -642,15 +640,12 @@
     function setupLobbyRealtime() {
       if (lobbyChannel) return;
 
-      // Wir abonnieren den gesamten Public-Kanal ohne Tabellen-Vorfilter. 
-      // Das umgeht aggressive Caching-Mechanismen im Webbrowser.
       lobbyChannel = supabaseClientInstance
         .channel('lobby-room-channel')
-        .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
-          if (payload.table === 'jeopardy_logins') {
-            // Unverzüglich den Status bei allen anderen Clients neu berechnen
-            checkLobbyStatus();
-          }
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'jeopardy_logins' }, (payload) => {
+          console.log("Echtzeit-Event in Lobby empfangen:", payload);
+          // Absolut JEDE Änderung zwingt den Browser zur sofortigen Neu-Überprüfung
+          checkLobbyStatus();
         })
         .subscribe((status) => {
           console.log("Echtzeit Lobby-Kanal aktiv:", status);
@@ -685,6 +680,7 @@
       if (count < 4) {
         document.getElementById("lobby-msg").innerText = `Warte auf weitere Teams... (${count}/4)`;
         document.getElementById("countdown-box").style.display = "none";
+        if (countdownInterval) clearInterval(countdownInterval);
         countdownActive = false;
       } else if (count >= 4 && !countdownActive) {
         countdownActive = true;
@@ -710,18 +706,20 @@
     }
 
     function startLobbyCountdown() {
+      if (countdownInterval) clearInterval(countdownInterval);
+      
       let secondsLeft = 5;
       const countdownBox = document.getElementById("countdown-box");
       document.getElementById("lobby-msg").innerText = "🎉 Alle Teams bereit!";
       countdownBox.style.display = "block";
       countdownBox.innerText = `Spiel startet in ${secondsLeft} Sekunden`;
 
-      const timer = setInterval(() => {
+      countdownInterval = setInterval(() => {
         secondsLeft--;
         if (secondsLeft > 0) {
           countdownBox.innerText = `Spiel startet in ${secondsLeft} Sekunden`;
         } else {
-          clearInterval(timer);
+          clearInterval(countdownInterval);
           launchGame();
         }
       }, 1000);
