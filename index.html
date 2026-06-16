@@ -618,16 +618,20 @@
       }
     }
 
+    // Sofort beim Laden ausführen
     window.onload = async () => {
       createBeerStars();
       
+      // WICHTIG: Die Echtzeit-Lobby wird SOFORT gestartet, komplett unabhängig vom Laden der Fragen
+      setupLobbyRealtime();
+      await checkLobbyStatus();
+      
       try {
-        const { error } = await supabaseClientInstance.from("jeopardy_questions").select("id", { count: 'exact', head: true });
+        // Erst hier prüfen wir die Verbindung im Hintergrund
+        const { error } = await supabaseClientInstance.from("jeopardy_questions").select("id", { count: 'head', head: true });
         if (!error) {
           document.getElementById('net-indicator').className = "network-status status-online";
           document.getElementById('net-indicator').innerText = "🟢 LIVE-MODUS";
-          setupLobbyRealtime();
-          await checkLobbyStatus();
         } else { throw error; }
       } catch (e) {
         document.getElementById('net-indicator').className = "network-status status-offline";
@@ -636,20 +640,28 @@
     };
 
     function setupLobbyRealtime() {
+      if (lobbyChannel) return;
+
+      // Wir abonnieren den gesamten Public-Kanal ohne Tabellen-Vorfilter. 
+      // Das umgeht aggressive Caching-Mechanismen im Webbrowser.
       lobbyChannel = supabaseClientInstance
-        .channel('lobby-changes')
+        .channel('lobby-room-channel')
         .on('postgres_changes', { event: '*', schema: 'public' }, (payload) => {
           if (payload.table === 'jeopardy_logins') {
-            setTimeout(async () => {
-              await checkLobbyStatus();
-            }, 150);
+            // Unverzüglich den Status bei allen anderen Clients neu berechnen
+            checkLobbyStatus();
           }
         })
-        .subscribe();
+        .subscribe((status) => {
+          console.log("Echtzeit Lobby-Kanal aktiv:", status);
+        });
     }
 
     async function checkLobbyStatus() {
-      const { data: logins, error } = await supabaseClientInstance.from("jeopardy_logins").select("team_name");
+      const { data: logins, error } = await supabaseClientInstance
+        .from("jeopardy_logins")
+        .select("team_name");
+        
       if (error || !logins) return;
 
       const loggedTeams = logins.map(l => l.team_name);
