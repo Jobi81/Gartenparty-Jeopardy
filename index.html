@@ -472,6 +472,7 @@
       auth: { persistSession: false }
     });
 
+    // EXAKTER ABGLEICH MIT DEINER DATENBANK (image_f7ebaa.jpg)
     const categories = ["Abkürzungen", "Bierländer", "Fussball-WM", "Rubrik 4", "Rubrik 5"];
 
     function createBeerStars() {
@@ -509,6 +510,7 @@
       createBeerStars();
       
       try {
+        // KORREKTUR: Jetzt mit "s" am Ende (jeopardy_questions)
         const { error } = await supabaseClientInstance.from("jeopardy_questions").select("id", { count: 'exact', head: true });
         if (!error) {
           document.getElementById('net-indicator').className = "network-status status-online";
@@ -536,6 +538,7 @@
     }
 
     async function loadInitialData() {
+      // KORREKTUR: Jetzt mit "s" am Ende (jeopardy_questions)
       const { data: qData, error: qError } = await supabaseClientInstance.from("jeopardy_questions").select("*");
       if (qError) throw qError;
       questionsData = qData || [];
@@ -623,7 +626,7 @@
       if (!question) return;
 
       try {
-        // 1. HARDCORE CHECK: Frischesten Wert vom Server erzwingen vor jeglicher Anzeige
+        // 1. HARDCORE CHECK vor dem Öffnen
         const { data: currentCheck, error: checkError } = await supabaseClientInstance
           .from("jeopardy_game_state")
           .select("*")
@@ -638,7 +641,7 @@
           return; 
         }
 
-        // 2. DATENBANK-SPERRE: Ändert NUR, wenn der Serverstatus JETZT IMMER NOCH exakt 'open' ist
+        // 2. ABSOLUTE LIVE-SPERRE
         const { data, error } = await supabaseClientInstance
           .from("jeopardy_game_state")
           .update({ status: 'locked', locked_by: currentTeam })
@@ -646,7 +649,6 @@
           .eq('status', 'open') 
           .select();
 
-        // Wenn kein Datensatz zurückkommt, war ein anderes Gerät schneller
         if (error || !data || data.length === 0) {
           const { data: updatedCheck } = await supabaseClientInstance.from("jeopardy_game_state").select("*").eq('question_id', questionId).single();
           if (updatedCheck) gameStateData[questionId] = updatedCheck;
