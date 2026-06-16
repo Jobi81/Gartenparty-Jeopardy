@@ -144,11 +144,48 @@
       letter-spacing: 1px;
     }
 
-    .team-btn:hover {
+    .team-btn:hover:not(:disabled) {
       background: rgba(255, 204, 0, 0.1);
       border-color: var(--accent-color);
       box-shadow: 0 0 20px rgba(255, 204, 0, 0.2);
       transform: translateY(-2px);
+    }
+
+    .team-btn:disabled {
+      background: rgba(0, 0, 0, 0.4);
+      border-color: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.2);
+      cursor: not-allowed;
+    }
+
+    .team-btn.my-choice {
+      border-color: var(--cyan-neon) !important;
+      background: rgba(0, 242, 254, 0.1) !important;
+      color: #fff !important;
+      box-shadow: 0 0 20px rgba(0, 242, 254, 0.3) !important;
+    }
+
+    .lobby-status {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--cyan-neon);
+      margin-top: 20px;
+      letter-spacing: 1px;
+    }
+
+    .countdown-overlay {
+      font-size: 32px;
+      font-weight: 900;
+      color: var(--accent-color);
+      text-shadow: 0 0 20px var(--accent-neon);
+      margin-top: 25px;
+      animation: pulseCountdown 1s infinite alternate;
+      display: none;
+    }
+
+    @keyframes pulseCountdown {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.05); }
     }
 
     .board-header {
@@ -235,7 +272,6 @@
       letter-spacing: 1px;
     }
 
-    /* Wenn das EIGENE Team die Frage gelöst hat (Grün) */
     .matrix-cell.solved {
       background: rgba(0, 255, 204, 0.15);
       color: var(--success);
@@ -256,7 +292,6 @@
       text-shadow: none;
     }
 
-    /* Wenn ein ANDERES Team die Frage gelöst hat (Gelb/Orange) */
     .matrix-cell.solved-by-others {
       background: rgba(255, 204, 0, 0.1);
       color: #ffaa00;
@@ -437,10 +472,13 @@
     </div>
     <div class="team-selection-container">
       <h4>Wählt euer Team aus:</h4>
-      <button class="team-btn" onclick="loginTeam('Hopfen')">🌾 Team Hopfen</button>
-      <button class="team-btn" onclick="loginTeam('Malz')">🪵 Team Malz</button>
-      <button class="team-btn" onclick="loginTeam('Bier')">🍺 Team Bier</button>
-      <button class="team-btn" onclick="loginTeam('Durst')">🔥 Team Durst</button>
+      <button class="team-btn" id="btn-Hopfen" onclick="selectTeam('Hopfen')">🌾 Team Hopfen</button>
+      <button class="team-btn" id="btn-Malz" onclick="selectTeam('Malz')">🪵 Team Malz</button>
+      <button class="team-btn" id="btn-Bier" onclick="selectTeam('Bier')">🍺 Team Bier</button>
+      <button class="team-btn" id="btn-Durst" onclick="selectTeam('Durst')">🔥 Team Durst</button>
+      
+      <div class="lobby-status" id="lobby-msg">Lade aktuellen Warteraum...</div>
+      <div class="countdown-overlay" id="countdown-box">Spiel startet in 5 Sekunden</div>
     </div>
   </div>
 
@@ -486,17 +524,14 @@
     let gameStateData = {};
     let activeQuestion = null;
     let realtimeChannel = null;
+    let lobbyChannel = null;
+    let countdownActive = false;
     
     const supabaseUrl = "https://accjeyhsrghbxezyboxt.supabase.co";
-    
-    // ⚠️ HIER NOCHMAL DEINEN KOPIERTEN ANON PUBLIC KEY EINSETZEN
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mjg5ODIsImV4cCI6MjA5NzEwNDk4Mn0.njbnA14y98wuVdoPJHlk3tsBBQcOCC4A0nOfBUrlqzQ".trim();
     
     const supabaseClientInstance = window.supabase.createClient(supabaseUrl, supabaseKey, {
-      auth: { 
-        persistSession: false,
-        autoRefreshToken: false
-      }
+      auth: { persistSession: false, autoRefreshToken: false }
     });
 
     const categories = ["Abkürzungen", "Bierländer", "Fussball-WM", "Rubrik 4", "Rubrik 5"];
@@ -510,7 +545,6 @@
       for (let i = 0; i < beerCount; i++) {
         const svgNamespace = "http://www.w3.org/2000/svg";
         const svg = document.createElementNS(svgNamespace, "svg");
-        
         const height = Math.random() * 24 + 20; 
         const width = height * 0.75;
         
@@ -524,7 +558,6 @@
           <path d="M5 10 L6 26 Q12 30 18 26 L19 10 Z" fill="#ffcc00" />
           <path d="M19 12 Q23 14 22 19 Q21 23 18 22" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
         `;
-        
         svg.style.left = `${Math.random() * 100}%`;
         svg.style.top = `${Math.random() * 100}%`;
         svg.style.animationDelay = `${Math.random() * 4}s`; 
@@ -540,17 +573,90 @@
         if (!error) {
           document.getElementById('net-indicator').className = "network-status status-online";
           document.getElementById('net-indicator').innerText = "🟢 LIVE-MODUS";
-        } else {
-          throw error;
-        }
+          setupLobbyRealtime();
+          checkLobbyStatus();
+        } else { throw error; }
       } catch (e) {
         document.getElementById('net-indicator').className = "network-status status-offline";
         document.getElementById('net-indicator').innerText = "🔴 VERBINDUNGSFEHLER: " + e.message;
       }
     };
 
-    async function loginTeam(teamName) {
+    // Echtzeit-Überwachung für den Warteraum (Lobby)
+    function setupLobbyRealtime() {
+      lobbyChannel = supabaseClientInstance
+        .channel('lobby-changes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'jeopardy_logins' }, () => {
+          checkLobbyStatus();
+        })
+        .subscribe();
+    }
+
+    async function checkLobbyStatus() {
+      const { data: logins, error } = await supabaseClientInstance.from("jeopardy_logins").select("*");
+      if (error) return;
+
+      const loggedTeams = logins.map(l => l.team_name);
+      
+      // Buttons updaten (wer schon gewählt wurde, wird für andere deaktiviert)
+      const allTeams = ['Hopfen', 'Malz', 'Bier', 'Durst'];
+      allTeams.forEach(t => {
+        const btn = document.getElementById(`btn-${t}`);
+        if (btn) {
+          if (loggedTeams.includes(t)) {
+            btn.disabled = true;
+            if (currentTeam === t) {
+              btn.classList.add("my-choice");
+            }
+          } else {
+            btn.disabled = currentTeam !== ""; // Deaktivieren, wenn man selbst schon gewählt hat
+            btn.classList.remove("my-choice");
+          }
+        }
+      });
+
+      const count = loggedTeams.length;
+      
+      if (count < 4) {
+        document.getElementById("lobby-msg").innerText = `Warte auf weitere Teams... (${count}/4)`;
+        document.getElementById("countdown-box").style.display = "none";
+        countdownActive = false;
+      } else if (count === 4 && !countdownActive) {
+        countdownActive = true;
+        startLobbyCountdown();
+      }
+    }
+
+    // Wenn ein Team angeklickt wird
+    async function selectTeam(teamName) {
+      if (currentTeam !== "") return; // Schutz, falls man doppelt klickt
       currentTeam = teamName;
+      
+      // Im Server einbuchen
+      await supabaseClientInstance.from("jeopardy_logins").insert([{ team_name: teamName }]);
+      checkLobbyStatus();
+    }
+
+    function startLobbyCountdown() {
+      let secondsLeft = 5;
+      const countdownBox = document.getElementById("countdown-box");
+      document.getElementById("lobby-msg").innerText = "🎉 Alle Teams bereit!";
+      countdownBox.style.display = "block";
+      countdownBox.innerText = `Spiel startet in ${secondsLeft} Sekunden`;
+
+      const timer = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft > 0) {
+          countdownBox.innerText = `Spiel startet in ${secondsLeft} Sekunden`;
+        } else {
+          clearInterval(timer);
+          launchGame();
+        }
+      }, 1000);
+    }
+
+    async function launchGame() {
+      if (lobbyChannel) lobbyChannel.unsubscribe();
       
       try {
         await loadInitialData();
@@ -560,7 +666,7 @@
         buildMatrix();
         setupRealtime();
       } catch (err) {
-        alert("Kritischer Verbindungsfehler zur Live-Datenbank: " + err.message);
+        alert("Kritischer Verbindungsfehler beim Spielstart: " + err.message);
       }
     }
 
@@ -636,12 +742,9 @@
             const state = gameStateData[question.id] || { status: 'open', failed_teams: [] };
             
             if (state.status === 'solved') {
-              // INTELLIGENTE UNTERSCHEIDUNG: Wer hat gelöst?
               if (state.locked_by === currentTeam) {
-                // Eigenes Team -> Klassisch Grün + "GELÖST"
                 cell.classList.add("solved");
               } else {
-                // Fremdes Team -> Gelb/Orange + Name des Teams
                 cell.classList.add("solved-by-others");
                 const opponent = state.locked_by ? state.locked_by : "Gegner";
                 cell.setAttribute("data-solved-by", `VON TEAM ${opponent.toUpperCase()} GELÖST`);
