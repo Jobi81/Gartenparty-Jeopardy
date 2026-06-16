@@ -2,31 +2,155 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gartenparty Jeopardy PRO 2026</title>
   <style>
-    :root { --bg: #0f0f1a; --card: rgba(22, 22, 39, 0.85); --accent: #ffcc00; --cyan: #00f2fe; --success: #00ffcc; --danger: #ff3333; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; text-align: center; margin: 0; padding: 20px; }
-    
-    .jeopardy-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; max-width: 1000px; margin: 30px auto; }
-    .matrix-cell { 
-      background: var(--card); padding: 40px 10px; border: 2px solid rgba(255, 204, 0, 0.3); border-radius: 12px; 
-      cursor: pointer; font-size: 3rem; font-weight: 900; color: var(--accent); transition: 0.3s; 
-      display: flex; align-items: center; justify-content: center;
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f0f1a 0%, #151528 50%, #0b0b14 100%);
+      --card-bg: rgba(22, 22, 39, 0.75);
+      --card-border: rgba(255, 204, 0, 0.15);
+      --accent-color: #ffcc00;
+      --cyan-neon: #00f2fe;
+      --text-light: #f4f4f9;
+      --success: #00ffcc;
+      --danger: #ff3333;
     }
-    .matrix-cell:hover { border-color: var(--cyan); transform: scale(1.05); }
-    .category-title { font-weight: 900; color: var(--cyan); padding: 15px; font-size: 1.1rem; text-transform: uppercase; }
 
-    #question-modal { display: none; position: fixed; top: 10%; left: 10%; width: 80%; background: var(--card); padding: 50px; border: 3px solid var(--cyan); border-radius: 25px; z-index: 1000; }
-    .answer-btn { display: block; width: 100%; margin: 15px 0; padding: 22px; background: rgba(255,255,255,0.08); border: 2px solid rgba(255,255,255,0.1); color: white; border-radius: 12px; cursor: pointer; font-size: 20px; font-weight: bold; }
+    body {
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-light);
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Der funkelnde Bierglas-Sternen-Hintergrund von gestern Abend */
+    body::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        radial-gradient(circle, rgba(255, 204, 0, 0.15) 2px, transparent 40px),
+        radial-gradient(circle, rgba(0, 242, 254, 0.1) 2px, transparent 30px);
+      background-size: 550px 550px, 350px 350px;
+      background-position: 0 0, 150px 150px;
+      z-index: -1;
+      animation: backgroundflicker 6s infinite alternate ease-in-out;
+    }
+
+    @keyframes backgroundflicker {
+      0% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 0.9; transform: scale(1.02); }
+      100% { opacity: 0.7; transform: scale(0.98); }
+    }
+
+    h1 {
+      font-size: 2.8rem;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 10px;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(0, 242, 254, 0.6), 0 0 20px rgba(0, 242, 254, 0.3);
+    }
+
+    /* Netzwerk-Status-Indikator */
+    .network-status {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      z-index: 9999;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      backdrop-filter: blur(5px);
+      transition: all 0.4s ease;
+    }
+    .status-online { background: rgba(0, 255, 204, 0.15); color: #00ffcc; border: 1px solid rgba(0, 255, 204, 0.3); }
+    .status-offline { background: rgba(255, 51, 51, 0.15); color: #ff3333; border: 1px solid rgba(255, 51, 51, 0.3); }
+
+    /* Login Screen & Buttons */
+    #login-screen { margin-top: 80px; background: var(--card-bg); padding: 40px; border-radius: 20px; border: 1px solid var(--card-border); box-shadow: 0 15px 35px rgba(0,0,0,0.5); max-width: 400px; width: 100%; }
+    .team-btn {
+      display: block; width: 100%; margin: 15px 0; padding: 18px;
+      background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white; font-size: 1.2rem; font-weight: bold; border-radius: 12px; cursor: pointer;
+      transition: all 0.3s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .team-btn:hover { background: rgba(0, 242, 254, 0.1); border-color: var(--cyan-neon); transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 242, 254, 0.3); }
+
+    /* Jeopardy Matrix Board */
+    #board-screen { width: 100%; max-width: 1100px; display: none; }
+    #display-team { color: var(--accent-color); font-size: 1.5rem; margin-bottom: 20px; text-shadow: 0 0 8px rgba(255,204,0,0.4); }
+    
+    .jeopardy-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; margin: 20px 0; }
+    
+    .category-title {
+      font-weight: 800; color: var(--cyan-neon); padding: 15px 5px; font-size: 1.15rem;
+      text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center;
+      border-bottom: 3px solid var(--cyan-neon); text-shadow: 0 0 10px rgba(0,242,254,0.3);
+    }
+    
+    .matrix-cell {
+      background: var(--card-bg); padding: 35px 10px; border: 2px solid var(--card-border); border-radius: 14px;
+      cursor: pointer; font-size: 2.8rem; font-weight: 900; color: var(--accent-color);
+      display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .matrix-cell:hover { border-color: var(--cyan-neon); transform: translateY(-5px) scale(1.03); box-shadow: 0 10px 25px rgba(0, 242, 254, 0.4); color: #fff; }
+
+    /* Quiz-Fragen Overlay (Modal) */
+    #question-modal {
+      display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 80%; max-width: 850px; background: rgba(15, 15, 26, 0.95); padding: 50px;
+      border: 3px solid var(--cyan-neon); border-radius: 24px; z-index: 1000;
+      box-shadow: 0 0 60px rgba(0, 242, 254, 0.4); backdrop-filter: blur(20px);
+      animation: modalIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes modalIn { from { transform: translate(-50%, -40%) scale(0.9); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+
+    #q-text { font-size: 2.2rem; line-height: 1.4; color: #fff; margin-bottom: 35px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+    
+    .answer-btn {
+      display: block; width: 100%; margin: 16px 0; padding: 22px;
+      background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1);
+      color: white; border-radius: 14px; cursor: pointer; font-size: 1.25rem; font-weight: bold;
+      transition: all 0.25s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .answer-btn:hover { background: rgba(255, 255, 255, 0.12); border-color: var(--cyan-neon); transform: scale(1.01); }
   </style>
 </head>
 <body>
 
-  <h1>Gartenparty Jeopardy PRO</h1>
-  <div class="jeopardy-grid" id="matrix-container"></div>
+  <div id="net-indicator" class="network-status status-offline">Prüfe Verbindung...</div>
+  
+  <!-- Startbildschirm: Teamauswahl -->
+  <div id="login-screen">
+    <h2 style="text-align:center; color:var(--cyan-neon); margin-top:0;">Wähle dein Team</h2>
+    <button class="team-btn" onclick="loginTeam('Hopfen')">Team Hopfen</button>
+    <button class="team-btn" onclick="loginTeam('Malz')">Team Malz</button>
+    <button class="team-btn" onclick="loginTeam('Bier')">Team Bier</button>
+    <button class="team-btn" onclick="loginTeam('Durst')">Team Durst</button>
+  </div>
 
+  <!-- Spielfeld (Board) -->
+  <div id="board-screen">
+    <h1>Gartenparty Jeopardy PRO</h1>
+    <div id="display-team"></div>
+    <div class="jeopardy-grid" id="matrix-container"></div>
+  </div>
+
+  <!-- Frage-Fenster -->
   <div id="question-modal">
-    <h2 id="q-text" style="color: var(--accent); font-size: 2rem; margin-bottom: 30px;"></h2>
+    <h2 id="q-text"></h2>
     <div id="answers-container"></div>
   </div>
 
@@ -36,18 +160,41 @@
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mjg5ODIsImV4cCI6MjA5NzEwNDk4Mn0.njbnA14y98wuVdoPJHlk3tsBBQcOCC4A0nOfBUrlqzQ";
     const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    async function initGame() {
-      const { data, error } = await supabaseClient.from("jeopardy_questions").select("*");
-      if (error) { console.error(error); return; }
+    // Live-Verbindungscheck direkt beim Laden der Seite
+    window.onload = async () => {
+      try {
+        const { error } = await supabaseClient.from("jeopardy_questions").select("id", { count: 'exact', head: true });
+        if (!error) {
+          document.getElementById('net-indicator').className = "network-status status-online";
+          document.getElementById('net-indicator').innerText = "🟢 LIVE-MODUS";
+        }
+      } catch (e) {
+        console.error("Verbindung zu Supabase blockiert oder fehlgeschlagen.");
+      }
+    };
+
+    async function loginTeam(teamName) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('board-screen').style.display = 'block';
+      document.getElementById('display-team').innerText = "Aktives Team: " + teamName;
       
-      const catMap = ["Abkürzungen", "Bierländer", "Fussball-WM", "Geografie", "Unnützes Wissen"];
-      buildMatrix(data, catMap);
+      try {
+        const { data, error } = await supabaseClient.from("jeopardy_questions").select("*");
+        if (error) throw error;
+        buildMatrix(data);
+      } catch (e) {
+        alert("Fehler beim Abrufen der Fragen: " + e.message);
+      }
     }
 
-    function buildMatrix(questions, catMap) {
+    function buildMatrix(questions) {
       const container = document.getElementById('matrix-container');
       container.innerHTML = "";
       
+      // Die 5 gewünschten Rubriken
+      const catMap = ["Abkürzungen", "Bierländer", "Fussball-WM", "Geografie", "Unnützes Wissen"];
+      
+      // Header zeichnen
       catMap.forEach(cat => {
         let div = document.createElement('div');
         div.className = 'category-title';
@@ -55,8 +202,10 @@
         container.appendChild(div);
       });
 
+      // Zellen von 1 bis 5 Punkten einreihen
       for (let p = 1; p <= 5; p++) {
         catMap.forEach(cat => {
+          // Extrem toleranter Abgleich, falls in der DB Leerzeichen oder abweichende Groß/Kleinschreibung genutzt wurden
           const q = questions.find(item => 
             item.points == p && 
             item.category.trim().toLowerCase() === cat.toLowerCase()
@@ -69,7 +218,7 @@
             div.onclick = () => showQuestion(q);
           } else {
             div.innerText = "-";
-            div.style.opacity = "0.1";
+            div.style.opacity = "0.15";
           }
           container.appendChild(div);
         });
@@ -80,6 +229,7 @@
       document.getElementById('q-text').innerText = q.question;
       const container = document.getElementById('answers-container');
       container.innerHTML = "";
+      
       [q.answer_a, q.answer_b, q.answer_c, q.answer_d].forEach(opt => {
         let btn = document.createElement('button');
         btn.className = 'answer-btn';
@@ -87,19 +237,23 @@
         btn.onclick = () => {
           const isCorrect = (opt === q.correct_answer);
           btn.style.background = isCorrect ? 'var(--success)' : 'var(--danger)';
+          btn.style.borderColor = isCorrect ? 'var(--success)' : 'var(--danger)';
+          
           if(!isCorrect) {
              Array.from(container.children).forEach(b => {
-               if(b.innerText === q.correct_answer) b.style.background = 'var(--success)';
+               if(b.innerText === q.correct_answer) {
+                 b.style.background = 'var(--success)';
+                 b.style.borderColor = 'var(--success)';
+               }
              });
           }
-          setTimeout(() => { document.getElementById('question-modal').style.display = 'none'; }, 2000);
+          // Nach 3 Sekunden schließt sich das Fenster automatisch
+          setTimeout(() => { document.getElementById('question-modal').style.display = 'none'; }, 3000);
         };
         container.appendChild(btn);
       });
       document.getElementById('question-modal').style.display = 'block';
     }
-
-    initGame();
   </script>
 </body>
 </html>
