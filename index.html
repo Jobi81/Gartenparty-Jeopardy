@@ -209,7 +209,7 @@
       flex-direction: column;
     }
 
-    .matrix-cell:hover:not(.locked):not(.solved):not(.failed) {
+    .matrix-cell:hover:not(.locked):not(.solved):not(.solved-by-others):not(.failed) {
       background: rgba(35, 35, 60, 0.8);
       border-color: var(--cyan-neon);
       color: #fff;
@@ -235,6 +235,7 @@
       letter-spacing: 1px;
     }
 
+    /* Wenn das EIGENE Team die Frage gelöst hat (Grün) */
     .matrix-cell.solved {
       background: rgba(0, 255, 204, 0.15);
       color: var(--success);
@@ -252,6 +253,26 @@
       font-weight: 800;
       color: var(--success);
       letter-spacing: 1px;
+      text-shadow: none;
+    }
+
+    /* Wenn ein ANDERES Team die Frage gelöst hat (Gelb/Orange) */
+    .matrix-cell.solved-by-others {
+      background: rgba(255, 204, 0, 0.1);
+      color: #ffaa00;
+      border-color: rgba(255, 170, 0, 0.5);
+      cursor: not-allowed;
+      text-shadow: 0 0 12px rgba(255, 170, 0, 0.3);
+      box-shadow: inset 0 0 15px rgba(255, 170, 0, 0.05);
+    }
+    .matrix-cell.solved-by-others::after {
+      content: attr(data-solved-by);
+      display: block;
+      font-size: 10px;
+      margin-top: 8px;
+      font-weight: 700;
+      color: #ffaa00;
+      letter-spacing: 0.5px;
       text-shadow: none;
     }
 
@@ -468,7 +489,7 @@
     
     const supabaseUrl = "https://accjeyhsrghbxezyboxt.supabase.co";
     
-    // ⚠️ HIER BITTE DEN ECHTEN ANON-KEY AUS DER ZWEITEN TABELLE KOPIEREN
+    // ⚠️ HIER NOCHMAL DEINEN KOPIERTEN ANON PUBLIC KEY EINSETZEN
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mjg5ODIsImV4cCI6MjA5NzEwNDk4Mn0.njbnA14y98wuVdoPJHlk3tsBBQcOCC4A0nOfBUrlqzQ".trim();
     
     const supabaseClientInstance = window.supabase.createClient(supabaseUrl, supabaseKey, {
@@ -613,10 +634,28 @@
 
           if (question) {
             const state = gameStateData[question.id] || { status: 'open', failed_teams: [] };
-            if (state.status === 'solved') cell.classList.add("solved");
-            else if (state.status === 'locked' && state.locked_by !== currentTeam) cell.classList.add("locked");
-            else if (state.failed_teams && state.failed_teams.includes(currentTeam)) cell.classList.add("failed");
-            else cell.onclick = () => openQuestion(question.id);
+            
+            if (state.status === 'solved') {
+              // INTELLIGENTE UNTERSCHEIDUNG: Wer hat gelöst?
+              if (state.locked_by === currentTeam) {
+                // Eigenes Team -> Klassisch Grün + "GELÖST"
+                cell.classList.add("solved");
+              } else {
+                // Fremdes Team -> Gelb/Orange + Name des Teams
+                cell.classList.add("solved-by-others");
+                const opponent = state.locked_by ? state.locked_by : "Gegner";
+                cell.setAttribute("data-solved-by", `VON TEAM ${opponent.toUpperCase()} GELÖST`);
+              }
+            }
+            else if (state.status === 'locked' && state.locked_by !== currentTeam) {
+              cell.classList.add("locked");
+            }
+            else if (state.failed_teams && state.failed_teams.includes(currentTeam)) {
+              cell.classList.add("failed");
+            }
+            else {
+              cell.onclick = () => openQuestion(question.id);
+            }
           } else {
             cell.innerText = "-";
             cell.style.opacity = "0.3";
