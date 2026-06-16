@@ -32,7 +32,6 @@
       overflow-x: hidden;
     }
 
-    /* Netzwerk-Status-Indikator */
     .network-status {
       position: fixed;
       top: 15px;
@@ -51,7 +50,6 @@
     .status-online { color: #00ffcc; border: 1px solid rgba(0, 255, 204, 0.3); }
     .status-offline { color: #ff3333; border: 1px solid rgba(255, 51, 51, 0.3); }
 
-    /* --- DEZENT FUNKELNDE, ABER GRÖSSERE BIERGLÄSER --- */
     .star-field {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -401,7 +399,7 @@
 </head>
 <body>
 
-  <div id="net-indicator" class="network-status status-offline">Prüfe Verbindung...</div>
+  <div id="net-indicator" class="network-status status-offline">Verbinde mit Server...</div>
 
   <div class="star-field" id="star-container"></div>
 
@@ -467,41 +465,14 @@
     let gameStateData = {};
     let activeQuestion = null;
     let realtimeChannel = null;
-    let supabaseClientInstance = null;
+    
+    const supabaseUrl = "https://rnswwuqougrthkhybqrx.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJuc3d3dXFvdWdydGhraHlicXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzgwOTMsImV4cCI6MjA5Njc1NDA5M30.WE_SEXytgEr6Z5J1S7ZlUJtnD5lSLSRuf7kfpRyemfM";
+    const supabaseClientInstance = window.supabase.createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false }
+    });
 
     const categories = ["Abkürzungen", "Bierländer", "Fussball-WM", "Rubrik 4", "Rubrik 5"];
-
-    const localQuestionsBackup = [
-      { id: 1, category: "Abkürzungen", points: 1, question: "Was bedeutet der Begriff „VAR“?", answer_a: "Video Assistant Referee", answer_b: "Visual Assistant Robot", answer_c: "Virtual Area Referee", answer_d: "Velocity Analysis Radar", correct_answer: "Video Assistant Referee" },
-      { id: 2, category: "Abkürzungen", points: 2, question: "Wofür steht die Abkürzung „WLAN“ im Bereich der Netzwerktechnik?", answer_a: "Wireless Local Area Network", answer_b: "Wired Link Assisted Network", answer_c: "Wave Length Access Note", answer_d: "Wide Logistics Authentication Network", correct_answer: "Wireless Local Area Network" },
-      { id: 3, category: "Abkürzungen", points: 3, question: "Wofür steht das „G“ in Bezeichnungen wie 4G oder 5G im Mobilfunk?", answer_a: "Gateway", answer_b: "Generation", answer_c: "Gigabit", answer_d: "Global", correct_answer: "Generation" },
-      { id: 4, category: "Abkürzungen", points: 4, question: "Wofür steht die Abkürzung „USB“ bei Computeranschlüssen?", answer_a: "Unified Storage Battery", answer_b: "Universal Smart Bridge", answer_c: "Uniform System Backup", answer_d: "Universal Serial Bus", correct_answer: "Universal Serial Bus" },
-      { id: 5, category: "Abkürzungen", points: 5, question: "Wofür steht die Abkürzung „HDMI“ bei modernen Video- und Audiokabeln?", answer_a: "Home Display Managed Interconnect", answer_b: "Hyper-Digital Musik Input", answer_c: "High-Definition Multimedia Interface", answer_d: "High-Sensity Media Integration", correct_answer: "High-Definition Multimedia Interface" },
-      
-      { id: 6, category: "Bierländer", points: 1, question: "Aus welchem Land stammt das weltbekannte, dunkle Stout-Bier „Guinness“?", answer_a: "Irland", answer_b: "Schottland", answer_c: "Niederlande", answer_d: "England", correct_answer: "Irland" },
-      { id: 7, category: "Bierländer", points: 2, question: "Aus welchem Land kommt die traditionsreiche Premium-Marke „Stella Artois“?", answer_a: "Frankreich", answer_b: "Belgien", answer_c: "Luxemburg", answer_d: "Dänemark", correct_answer: "Belgien" },
-      { id: 8, category: "Bierländer", points: 3, question: "Aus welchem Land stammt das beliebte, hellgoldene Lagerbier „Karlovačko“?", answer_a: "Slowenien", answer_b: "Kroatien", answer_c: "Serbien", answer_d: "Slowakei", correct_answer: "Kroatien" },
-      { id: 9, category: "Bierländer", points: 4, question: "Woher kommt die Brauerei „Švyturys“? (Tipp: gegründet 1784 in einer bekannten Hafenstadt an der Ostsee)", answer_a: "Estland", answer_b: "Litauen", answer_c: "Polen", answer_d: "Finnland", correct_answer: "Litauen" },
-      { id: 10, category: "Bierländer", points: 5, question: "Woher stammt das milde Lagerbier „Quilmes“?", answer_a: "Mexiko", answer_b: "Brasilien", answer_c: "Argentinien", answer_d: "Chile", correct_answer: "Argentinien" },
-      
-      { id: 11, category: "Fussball-WM", points: 1, question: "Wie viele Nationen nehmen durch die historische Aufstockung der FIFA erstmals insgesamt an der WM-Endrunde teil?", answer_a: "32", answer_b: "36", answer_c: "42", answer_d: "48", correct_answer: "48" },
-      { id: 12, category: "Fussball-WM", points: 2, question: "Welches Land wird zum dritten Mal Gastgeber einer WM-Endrunde (nach 1970 und 1986)?", answer_a: "USA", answer_b: "Kanada", answer_c: "Mexiko", answer_d: "Brasilien", correct_answer: "Mexiko" },
-      { id: 13, category: "Fussball-WM", points: 3, question: "Welches Stadion wurde von der FIFA als offizieller Austragungsort für das große Endspiel ausgewählt?", answer_a: "Aztekenstadion", answer_b: "MetLife Stadium / NY Jersey", answer_c: "SoFi Stadium / Los Angeles", answer_d: "AT&T Stadium / Dallas", correct_answer: "MetLife Stadium / NY Jersey" },
-      { id: 14, category: "Fussball-WM", points: 4, question: "Welche sportliche Neuerung beim Weg ins Finale gibt es durch die Aufstockung auf 48 Teams?", answer_a: "Zwischenrunde mit Play-offs für Gruppendritte", answer_b: "Einführung des Sechzehntelfinales (8 Siege nötig)", answer_c: "Die vier besten Gruppensieger überspringen Runde 1", answer_d: "Keine Unentschieden mehr in der Gruppenphase", correct_answer: "Zwischenrunde mit Play-offs für Gruppendritte" },
-      { id: 15, category: "Fussball-WM", points: 5, question: "Wie viele Mannschaften nehmen zum ersten Mal in ihrer Geschichte an einer WM-Endrunde teil?", answer_a: "3 Mannschaften", answer_b: "4 Mannschaften", answer_c: "5 Mannschaften", answer_d: "6 Mannschaften", correct_answer: "4 Mannschaften" },
-      
-      { id: 16, category: "Rubrik 4", points: 1, question: "Welcher Fluss fließt auf seinem Weg zum Schwarzen Meer durch insgesamt zehn europäische Länder?", answer_a: "Rhein", answer_b: "Elbe", answer_c: "Donau", answer_d: "Oder", correct_answer: "Donau" },
-      { id: 17, category: "Rubrik 4", points: 2, question: "Welches Land hat gemeinsam mit China die meisten Landesgrenzen weltweit (nämlich stolze 14 Nachbarn)?", answer_a: "Russland", answer_b: "Brasilien", answer_c: "Indien", answer_d: "Kanada", correct_answer: "Russland" },
-      { id: 18, category: "Rubrik 4", points: 3, question: "Welche beiden Hauptstädte weltweit liegen am dichtesten beieinander und sind nur durch den Fluss Kongo getrennt?", answer_a: "Wien und Bratislava", answer_b: "Brazzaville und Kinshasa", answer_c: "Buenos Aires und Montevideo", answer_d: "Helsinki und Tallinn", correct_answer: "Brazzaville und Kinshasa" },
-      { id: 19, category: "Rubrik 4", points: 4, question: "Wie viel der gesamten Erdoberfläche bedeckt der Pazifische Ozean in etwa?", answer_a: "Ungefähr 20 %", answer_b: "Ungefähr 35 %", answer_c: "Ungefähr 50 %", answer_d: "Ungefähr 65 %", correct_answer: "Ungefähr 35 %" },
-      { id: 20, category: "Rubrik 4", points: 5, question: "Welches Land hat die längste gemeinsame Landesgrenze mit Frankreich?", answer_a: "Spanien", answer_b: "Deutschland", answer_c: "Brasilien", answer_d: "Algerien", correct_answer: "Brasilien" },
-      
-      { id: 21, category: "Rubrik 5", points: 1, question: "Welches Spielzeugprodukt wurde in den 1950er Jahren ursprünglich als Tapetenreiniger erfunden?", answer_a: "Lego-Bausteine", answer_b: "Playmobil", answer_c: "Knete (Play-Doh)", answer_d: "Textmarker", correct_answer: "Knete (Play-Doh)" },
-      { id: 22, category: "Rubrik 5", points: 2, question: "Welches practical Büro-Ding wurde ausgerechnet von einem Bankräuber im Gefängnis erfunden?", answer_a: "Der Locher", answer_b: "Der Anspitzer", answer_c: "Die Büroklammer", answer_d: "Der Klebestift", correct_answer: "Der Locher" },
-      { id: 23, category: "Rubrik 5", points: 3, question: "Welches dieser Tiere besitzt sage und schreibe drei Herzen und blaues Blut?", answer_a: "Der Haifisch", answer_b: "Der Tintenfisch (Krake)", answer_c: "Der Regenwurm", answer_d: "Das Krokodil", correct_answer: "Der Tintenfisch (Krake)" },
-      { id: 24, category: "Rubrik 5", points: 4, question: "Wie lange dauert es in etwa, bis eine klassische Glasflasche in der Natur vollständig biologisch abgebaut ist?", answer_a: "Rund 500 Jahre", answer_b: "Rund 5.000 Jahre", answer_c: "Rund 50.000 Jahre", answer_d: "Rund 500.000 Jahre oder länger", correct_answer: "Rund 500.000 Jahre oder länger" },
-      { id: 25, category: "Rubrik 5", points: 5, question: "Welches weltbekannte Lebensmittel ist das einzige, das unter normalen Bedingungen niemals verdirbt?", answer_a: "Honig", answer_b: "Weißer Reis", answer_c: "Ahornsirup", answer_d: "Olivenöl", correct_answer: "Honig" }
-    ];
 
     function createBeerStars() {
       const container = document.getElementById('star-container');
@@ -538,73 +509,33 @@
       createBeerStars();
       
       try {
-        const supabaseUrl = "https://rnswwuqougrthkhybqrx.supabase.co";
-        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJuc3d3dXFvdWdydGhraHlicXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzgwOTMsImV4cCI6MjA5Njc1NDA5M30.WE_SEXytgEr6Z5J1S7ZlUJtnD5lSLSRuf7kfpRyemfM";
-        
-        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-          const checkClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-          const { error } = await checkClient.from("jeopardy_questions").select("id", { count: 'exact', head: true });
-          if (!error) {
-            document.getElementById('net-indicator').className = "network-status status-online";
-            document.getElementById('net-indicator').innerText = "🟢 LIVE-MODUS";
-          }
+        const { error } = await supabaseClientInstance.from("jeopardy_questions").select("id", { count: 'exact', head: true });
+        if (!error) {
+          document.getElementById('net-indicator').className = "network-status status-online";
+          document.getElementById('net-indicator').innerText = "🟢 LIVE-MODUS";
         }
       } catch (e) {
-        console.error("Verbindung zu Supabase fehlgeschlagen.");
+        document.getElementById('net-indicator').className = "network-status status-offline";
+        document.getElementById('net-indicator').innerText = "🔴 VERBINDUNGSFEHLER";
       }
     };
 
-    function loginTeam(teamName) {
+    async function loginTeam(teamName) {
       currentTeam = teamName;
       
-      if (window.location.protocol === 'file:' || window.location.hostname === '') {
-        console.log("Lokaler PC-Modus aktiv. Starte autarken Offline-Modus.");
-        activateOfflinePreview(teamName);
-        return;
-      }
-
       try {
-        const supabaseUrl = "https://rnswwuqougrthkhybqrx.supabase.co";
-        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJuc3d3dXFvdWdydGhraHlicXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzgwOTMsImV4cCI6MjA5Njc1NDA5M30.WE_SEXytgEr6Z5J1S7ZlUJtnD5lSLSRuf7kfpRyemfM";
-        
-        if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-          supabaseClientInstance = window.supabase.createClient(supabaseUrl, supabaseKey, {
-            auth: { persistSession: false }
-          });
-          
-          loadInitialData().then(() => {
-            document.getElementById("login-screen").style.display = "none";
-            document.getElementById("board-screen").style.display = "block";
-            document.getElementById("display-team").innerText = "TEAM: " + currentTeam.toUpperCase();
-            buildMatrix();
-            setupRealtime();
-          }).catch(err => {
-            activateOfflinePreview(teamName);
-          });
-        } else {
-          activateOfflinePreview(teamName);
-        }
-      } catch (e) {
-        activateOfflinePreview(teamName);
+        await loadInitialData();
+        document.getElementById("login-screen").style.display = "none";
+        document.getElementById("board-screen").style.display = "block";
+        document.getElementById("display-team").innerText = "TEAM: " + currentTeam.toUpperCase();
+        buildMatrix();
+        setupRealtime();
+      } catch (err) {
+        alert("Kritischer Verbindungsfehler zur Live-Datenbank: " + err.message);
       }
-    }
-
-    function activateOfflinePreview(teamName) {
-      document.getElementById("login-screen").style.display = "none";
-      document.getElementById("board-screen").style.display = "block";
-      document.getElementById("display-team").innerText = "TEAM: " + teamName.toUpperCase();
-      
-      questionsData = localQuestionsBackup;
-      gameStateData = {};
-      questionsData.forEach(q => {
-        gameStateData[q.id] = { question_id: q.id, status: 'open', locked_by: null, failed_teams: [] };
-      });
-
-      buildMatrix();
     }
 
     async function loadInitialData() {
-      if(!supabaseClientInstance) return;
       const { data: qData, error: qError } = await supabaseClientInstance.from("jeopardy_questions").select("*");
       if (qError) throw qError;
       questionsData = qData || [];
@@ -613,15 +544,9 @@
       if (sError) throw sError;
       
       gameStateData = {};
-      if (sData && sData.length > 0) {
-        sData.forEach(state => {
-          gameStateData[state.question_id] = state;
-        });
-      } else {
-        questionsData.forEach(q => {
-          gameStateData[q.id] = { question_id: q.id, status: 'open', locked_by: null, failed_teams: [] };
-        });
-      }
+      sData.forEach(state => {
+        gameStateData[state.question_id] = state;
+      });
       calculateMyScore();
     }
 
@@ -638,7 +563,6 @@
     }
 
     function setupRealtime() {
-      if(!supabaseClientInstance) return;
       realtimeChannel = supabaseClientInstance
         .channel('schema-db-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'jeopardy_game_state' }, (payload) => {
@@ -647,6 +571,9 @@
           gameStateData[updatedState.question_id] = updatedState;
           
           if (activeQuestion && activeQuestion.id === updatedState.question_id) {
+            if (updatedState.status === 'locked' && updatedState.locked_by !== currentTeam) {
+              closeQuestionView();
+            }
             if (updatedState.status === 'solved' && updatedState.locked_by !== currentTeam) {
               closeQuestionView();
             }
@@ -695,13 +622,8 @@
       const question = questionsData.find(q => q.id === questionId);
       if (!question) return;
 
-      if (!supabaseClientInstance || !realtimeChannel) {
-        showQuestionView(question);
-        return;
-      }
-
       try {
-        // 1. BLITZ-CHECK: Vor dem Öffnen prüfen, ob die Frage auf dem Server noch 'open' ist
+        // 1. HARDCORE CHECK: Frischesten Wert vom Server erzwingen vor jeglicher Anzeige
         const { data: currentCheck, error: checkError } = await supabaseClientInstance
           .from("jeopardy_game_state")
           .select("*")
@@ -710,14 +632,13 @@
 
         if (checkError) throw checkError;
 
-        // Falls die Frage in genau dieser Sekunde vergeben wurde, Klick abbrechen
         if (currentCheck && currentCheck.status !== 'open') {
           gameStateData[questionId] = currentCheck;
           buildMatrix();
           return; 
         }
 
-        // 2. ABSOLUTE LIVE-SPERRE: Nur überschreiben, wenn der Status zeitgleich immer noch 'open' ist
+        // 2. DATENBANK-SPERRE: Ändert NUR, wenn der Serverstatus JETZT IMMER NOCH exakt 'open' ist
         const { data, error } = await supabaseClientInstance
           .from("jeopardy_game_state")
           .update({ status: 'locked', locked_by: currentTeam })
@@ -725,23 +646,18 @@
           .eq('status', 'open') 
           .select();
 
-        // Wenn das Update fehlschlägt oder kein Datensatz zurückkommt, war ein anderes Team schneller
+        // Wenn kein Datensatz zurückkommt, war ein anderes Gerät schneller
         if (error || !data || data.length === 0) {
-          const { data: updatedCheck } = await supabaseClientInstance
-            .from("jeopardy_game_state")
-            .select("*")
-            .eq('question_id', questionId)
-            .single();
+          const { data: updatedCheck } = await supabaseClientInstance.from("jeopardy_game_state").select("*").eq('question_id', questionId).single();
           if (updatedCheck) gameStateData[questionId] = updatedCheck;
           buildMatrix();
           return;
         }
 
-        // Nur bei erfolgreicher Sperrung wird die Frage geöffnet
         showQuestionView(question);
 
       } catch (err) {
-        console.error("Fehler bei der Live-Synchronisation der Sperre:", err);
+        console.error("Live-Synchronisationsfehler beim Klicken:", err);
       }
     }
 
@@ -787,24 +703,6 @@
         }
         btn.onclick = null;
       });
-      
-      if (!supabaseClientInstance || !realtimeChannel) {
-        if (isCorrect) {
-          gameStateData[activeQuestion.id].status = 'solved';
-          gameStateData[activeQuestion.id].locked_by = currentTeam;
-        } else {
-          gameStateData[activeQuestion.id].failed_teams.push(currentTeam);
-        }
-        
-        calculateMyScore();
-        
-        setTimeout(() => {
-          closeQuestionView();
-          buildMatrix();
-          checkGameEnd();
-        }, 3000);
-        return;
-      }
 
       const state = gameStateData[activeQuestion.id];
       let updatedFailed = state.failed_teams || [];
@@ -843,9 +741,7 @@
       document.getElementById("question-screen").style.display = "none";
       document.getElementById("end-screen").style.display = "block";
 
-      if (supabaseClientInstance) {
-        await supabaseClientInstance.from("jeopardy_scores").insert([{ team_name: currentTeam, score: myScore }]);
-      }
+      await supabaseClientInstance.from("jeopardy_scores").insert([{ team_name: currentTeam, score: myScore }]);
 
       const tbody = document.getElementById("score-table-body");
       tbody.innerHTML = `<tr><td>#1</td><td>${currentTeam}</td><td>${myScore}</td></tr>`;
