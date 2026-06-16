@@ -466,13 +466,14 @@
     let activeQuestion = null;
     let realtimeChannel = null;
     
-    const supabaseUrl = "https://rnswwuqougrthkhybqrx.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJuc3d3dXFvdWdydGhraHlicXJ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzgwOTMsImV4cCI6MjA5Njc1NDA5M30.WE_SEXytgEr6Z5J1S7ZlUJtnD5lSLSRuf7kfpRyemfM";
+    // KORRIGIERTE PROJECT-CREDENTIALS AUS DEINEM ECHTEN PROJEKT (image_f7e0a1.png)
+    const supabaseUrl = "https://accjeyhsrghbxezyboxt.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNzk2MTksImV4cCI6MjA5Njc1NTYxOX0.Vesv7MhZg0X9uJz8h9qBInZ_bZz6vH8I9YorA16VfU4";
+    
     const supabaseClientInstance = window.supabase.createClient(supabaseUrl, supabaseKey, {
       auth: { persistSession: false }
     });
 
-    // EXAKTER ABGLEICH MIT DEINER DATENBANK (image_f7ebaa.jpg)
     const categories = ["Abkürzungen", "Bierländer", "Fussball-WM", "Rubrik 4", "Rubrik 5"];
 
     function createBeerStars() {
@@ -510,7 +511,6 @@
       createBeerStars();
       
       try {
-        // KORREKTUR: Jetzt mit "s" am Ende (jeopardy_questions)
         const { error } = await supabaseClientInstance.from("jeopardy_questions").select("id", { count: 'exact', head: true });
         if (!error) {
           document.getElementById('net-indicator').className = "network-status status-online";
@@ -538,7 +538,6 @@
     }
 
     async function loadInitialData() {
-      // KORREKTUR: Jetzt mit "s" am Ende (jeopardy_questions)
       const { data: qData, error: qError } = await supabaseClientInstance.from("jeopardy_questions").select("*");
       if (qError) throw qError;
       questionsData = qData || [];
@@ -626,7 +625,6 @@
       if (!question) return;
 
       try {
-        // 1. HARDCORE CHECK vor dem Öffnen
         const { data: currentCheck, error: checkError } = await supabaseClientInstance
           .from("jeopardy_game_state")
           .select("*")
@@ -641,7 +639,6 @@
           return; 
         }
 
-        // 2. ABSOLUTE LIVE-SPERRE
         const { data, error } = await supabaseClientInstance
           .from("jeopardy_game_state")
           .update({ status: 'locked', locked_by: currentTeam })
