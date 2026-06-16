@@ -574,7 +574,7 @@
           document.getElementById('net-indicator').className = "network-status status-online";
           document.getElementById('net-indicator').innerText = "🟢 LIVE-MODUS";
           setupLobbyRealtime();
-          checkLobbyStatus();
+          await checkLobbyStatus();
         } else { throw error; }
       } catch (e) {
         document.getElementById('net-indicator').className = "network-status status-offline";
@@ -582,23 +582,25 @@
       }
     };
 
-    // Echtzeit-Überwachung für den Warteraum (Lobby)
     function setupLobbyRealtime() {
       lobbyChannel = supabaseClientInstance
         .channel('lobby-changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'jeopardy_logins' }, () => {
-          checkLobbyStatus();
+          // 200ms Verzögerung, um sicherzustellen, dass die Replikation auf allen Clients vollständig ist
+          setTimeout(async () => {
+            await checkLobbyStatus();
+          }, 200);
         })
         .subscribe();
     }
 
     async function checkLobbyStatus() {
-      const { data: logins, error } = await supabaseClientInstance.from("jeopardy_logins").select("*");
-      if (error) return;
+      const { data: logins, error } = await supabaseClientInstance.from("jeopardy_logins").select("team_name");
+      if (error || !logins) return;
 
       const loggedTeams = logins.map(l => l.team_name);
+      const count = loggedTeams.length;
       
-      // Buttons updaten (wer schon gewählt wurde, wird für andere deaktiviert)
       const allTeams = ['Hopfen', 'Malz', 'Bier', 'Durst'];
       allTeams.forEach(t => {
         const btn = document.getElementById(`btn-${t}`);
@@ -609,32 +611,36 @@
               btn.classList.add("my-choice");
             }
           } else {
-            btn.disabled = currentTeam !== ""; // Deaktivieren, wenn man selbst schon gewählt hat
-            btn.classList.remove("my-choice");
+            btn.disabled = (currentTeam !== ""); 
           }
         }
       });
-
-      const count = loggedTeams.length;
       
       if (count < 4) {
         document.getElementById("lobby-msg").innerText = `Warte auf weitere Teams... (${count}/4)`;
         document.getElementById("countdown-box").style.display = "none";
         countdownActive = false;
-      } else if (count === 4 && !countdownActive) {
+      } else if (count >= 4 && !countdownActive) {
         countdownActive = true;
         startLobbyCountdown();
       }
     }
 
-    // Wenn ein Team angeklickt wird
     async function selectTeam(teamName) {
-      if (currentTeam !== "") return; // Schutz, falls man doppelt klickt
+      if (currentTeam !== "") return; 
       currentTeam = teamName;
       
-      // Im Server einbuchen
-      await supabaseClientInstance.from("jeopardy_logins").insert([{ team_name: teamName }]);
-      checkLobbyStatus();
+      const btn = document.getElementById(`btn-${teamName}`);
+      if (btn) btn.classList.add("my-choice");
+      
+      document.getElementById("lobby-msg").innerText = "Übermittle Team-Anmeldung...";
+
+      try {
+        await supabaseClientInstance.from("jeopardy_logins").insert([{ team_name: teamName }]);
+        await checkLobbyStatus();
+      } catch (err) {
+        console.error("Fehler beim Login:", err);
+      }
     }
 
     function startLobbyCountdown() {
