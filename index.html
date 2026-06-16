@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gartenparty Jeopardy PRO 2026</title>
+  <style>
+    :root { --bg: #0f0f1a; --card: rgba(22, 22, 39, 0.75); --accent: #ffcc00; --cyan: #00f2fe; }
+    body { font-family: sans-serif; background: var(--bg); color: white; text-align: center; margin: 0; padding: 20px; }
+    .network-status { position: fixed; top: 10px; left: 10px; padding: 5px 10px; border-radius: 15px; font-size: 10px; z-index: 9999; }
+    .status-online { background: rgba(0, 255, 204, 0.2); color: #00ffcc; }
+    .status-offline { background: rgba(255, 51, 51, 0.2); color: #ff3333; }
+    .jeopardy-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-width: 900px; margin: 20px auto; }
+    .matrix-cell { background: var(--card); padding: 20px; border: 1px solid #444; cursor: pointer; border-radius: 8px; font-weight: bold; }
+    .team-btn { display: block; width: 80%; max-width: 300px; margin: 10px auto; padding: 15px; background: #222; border: 1px solid #555; color: white; border-radius: 8px; cursor: pointer; }
+    .category-title { font-weight: bold; color: var(--cyan); padding: 10px; border-bottom: 2px solid var(--cyan); }
+  </style>
+</head>
+<body>
+
+  <div id="net-indicator" class="network-status status-offline">Prüfe Verbindung...</div>
+  
+  <div id="login-screen">
+    <h1>Gartenparty Jeopardy</h1>
+    <button class="team-btn" onclick="loginTeam('Hopfen')">Team Hopfen</button>
+    <button class="team-btn" onclick="loginTeam('Malz')">Team Malz</button>
+    <button class="team-btn" onclick="loginTeam('Bier')">Team Bier</button>
+    <button class="team-btn" onclick="loginTeam('Durst')">Team Durst</button>
+  </div>
+
+  <div id="board-screen" style="display: none;">
+    <h2 id="display-team"></h2>
+    <div class="jeopardy-grid" id="matrix-container"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const supabaseUrl = "https://accjeyhsrghbxezyboxt.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mjg5ODIsImV4cCI6MjA5NzEwNDk4Mn0.njbnA14y98wuVdoPJHlk3tsBBQcOCC4A0nOfBUrlqzQ";
+    let supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    window.onload = async () => {
+      try {
+        const { count, error } = await supabaseClient.from("jeopardy_questions").select("id", { count: 'exact', head: true });
+        if (!error) document.getElementById('net-indicator').className = "network-status status-online", document.getElementById('net-indicator').innerText = "🟢 LIVE-MODUS";
+      } catch (e) {
+        console.error("Verbindungscheck fehlgeschlagen");
+      }
+    };
+
+    function updateVisualStatus(isLive) {
+      const indicator = document.getElementById("net-indicator");
+      indicator.className = isLive ? "network-status status-online" : "network-status status-offline";
+      indicator.innerText = isLive ? "🟢 LIVE" : "🔴 OFFLINE";
+    }
+
+    async function loginTeam(teamName) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('board-screen').style.display = 'block';
+      document.getElementById('display-team').innerText = "Team: " + teamName;
+      
+      try {
+        const { data, error } = await supabaseClient.from("jeopardy_questions").select("*");
+        if (error) throw error;
+        updateVisualStatus(true);
+        buildMatrix(data);
+      } catch (e) {
+        updateVisualStatus(false);
+        alert("Fehler beim Laden der Fragen: " + e.message);
+      }
+    }
+
+    function buildMatrix(questions) {
+      const container = document.getElementById('matrix-container');
+      container.innerHTML = "";
+      
+      const categories = [...new Set(questions.map(q => q.category))];
+      categories.forEach(cat => {
+        let div = document.createElement('div');
+        div.className = 'category-title';
+        div.innerText = cat;
+        container.appendChild(div);
+      });
+
+      for (let p = 1; p <= 5; p++) {
+        categories.forEach(cat => {
+          const q = questions.find(item => item.category === cat && item.points === p);
+          let div = document.createElement('div');
+          div.className = 'matrix-cell';
+          if (q) {
+            div.innerText = q.points;
+            div.onclick = () => alert("Frage: " + q.question);
+          } else {
+            div.innerText = "-";
+            div.style.opacity = "0.2";
+          }
+          container.appendChild(div);
+        });
+      }
+    }
+  </script>
+</body>
+</html>
