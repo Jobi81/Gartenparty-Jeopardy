@@ -6,7 +6,7 @@
   <title>Gartenparty Jeopardy PRO 2026</title>
   <style>
     :root {
-      --bg-gradient: linear-gradient(135deg, #0f0f1a 0%, #151528 50%, #0b0b14 100%);
+      --bg-gradient: linear-gradient(135deg, #070710 0%, #0f0f22 50%, #05050b 100%);
       --card-bg: rgba(22, 22, 39, 0.75);
       --card-border: rgba(255, 204, 0, 0.15);
       --accent-color: #ffcc00;
@@ -30,32 +30,37 @@
       overflow-x: hidden;
     }
 
-    /* Der echte funkelnde Bierglas-Sternen-Hintergrund */
+    /* Das wunderschöne, tiefenanimierte Bierglas-Funkeln von gestern Abend */
     body::before {
       content: "";
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       background-image: 
-        radial-gradient(circle, #ffcc00 2px, transparent 40px),
-        radial-gradient(circle, #ffcc00 1.5px, transparent 30px),
-        radial-gradient(circle, #00f2fe 1px, transparent 20px);
-      background-size: 150px 150px, 200px 200px, 300px 300px;
-      background-position: 0 0, 50px 70px, 120px 40px;
+        radial-gradient(circle, #ffcc00 2.5px, transparent 30px),
+        radial-gradient(circle, rgba(255, 204, 0, 0.8) 1.5px, transparent 20px),
+        radial-gradient(circle, #00f2fe 2px, transparent 40px),
+        radial-gradient(circle, rgba(255, 255, 255, 0.9) 1px, transparent 15px);
+      background-size: 400px 400px, 250px 250px, 500px 500px, 180px 180px;
+      background-position: 0 0, 40px 60px, 150px 100px, 80px 20px;
       z-index: -1;
-      animation: bubbleUp 8s infinite linear;
+      animation: magicFlicker 10s infinite alternate ease-in-out;
     }
 
-    @keyframes bubbleUp {
+    @keyframes magicFlicker {
       0% {
-        background-position: 0 0, 50px 70px, 120px 40px;
         opacity: 0.4;
+        transform: scale(1) translateY(0);
+        filter: brightness(0.9);
       }
       50% {
-        opacity: 0.8;
+        opacity: 0.95;
+        transform: scale(1.03) translateY(-10px);
+        filter: brightness(1.3) drop-shadow(0 0 15px rgba(255, 204, 0, 0.3));
       }
       100% {
-        background-position: 0 -150px, 50px -130px, 120px -260px;
-        opacity: 0.4;
+        opacity: 0.5;
+        transform: scale(0.97) translateY(5px);
+        filter: brightness(0.8);
       }
     }
 
@@ -110,7 +115,7 @@
     
     .matrix-cell {
       background: var(--card-bg); padding: 35px 10px; border: 2px solid var(--card-border); border-radius: 14px;
-      cursor: pointer; font-size: 2.8rem; font-weight: 900; color: var(--accent-color);
+      cursor: pointer; font-size: 3rem; font-weight: 900; color: var(--accent-color);
       display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
