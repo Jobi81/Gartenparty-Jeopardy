@@ -195,7 +195,7 @@
       max-width: 1200px;
       margin: 0 auto 30px auto;
       background: var(--card-bg);
-      padding: 18px 30px;
+      padding: 15px 30px;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,0.05);
       backdrop-filter: blur(10px);
@@ -443,7 +443,6 @@
       opacity: 0.7;
     }
 
-    /* --- INTERNES HINWEISFENSTER (POPUP) --- */
     .alert-overlay {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -463,12 +462,6 @@
       width: 90%;
       box-shadow: 0 20px 50px rgba(0,0,0,0.6), 0 0 30px rgba(255, 204, 0, 0.1);
       text-align: center;
-    }
-    .alert-modal h3 {
-      margin-top: 0;
-      color: var(--accent-color);
-      font-size: 24px;
-      letter-spacing: 1px;
     }
     .alert-modal p {
       font-size: 17px;
@@ -493,7 +486,7 @@
       box-shadow: 0 8px 20px rgba(255, 204, 0, 0.5);
     }
 
-    /* --- VISUELLES ENDPODIUM --- */
+    /* --- ENDPODIUM STYLES --- */
     .podium-container {
       max-width: 800px;
       margin: 40px auto;
@@ -517,7 +510,6 @@
       border: 1px solid rgba(255,255,255,0.05);
       border-radius: 16px;
       padding: 18px 30px;
-      transition: all 0.4s ease;
     }
     .rank-badge {
       font-size: 24px;
@@ -560,7 +552,6 @@
     .rank-row.highlight-my-team {
       border-color: var(--cyan-neon);
       background: rgba(0, 242, 254, 0.06);
-      box-shadow: inset 0 0 15px rgba(0, 242, 254, 0.05);
     }
     .rank-row.highlight-my-team .rank-name {
       color: var(--cyan-neon);
@@ -575,6 +566,26 @@
       font-weight: 600;
       color: var(--text-muted);
       margin-left: 4px;
+    }
+
+    .save-exit-btn {
+      background: linear-gradient(to right, #00ffcc, #00f2fe);
+      color: #0f0f1a;
+      border: none;
+      padding: 16px 45px;
+      font-size: 18px;
+      font-weight: 800;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 35px;
+      box-shadow: 0 5px 20px rgba(0, 255, 204, 0.2);
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .save-exit-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0, 242, 254, 0.5);
     }
 
     @media (max-width: 992px) {
@@ -601,10 +612,10 @@
 
   <div class="star-field" id="star-container"></div>
 
-  <!-- HINWEISFENSTER (CUSTOM ALERT MODAL) -->
+  <!-- INTERNES HINWEISFENSTER -->
   <div id="custom-alert" class="alert-overlay">
     <div class="alert-modal">
-      <h3>Sperre aktiv! 🔒</h3>
+      <h3>Sperre active! 🔒</h3>
       <p id="custom-alert-text">Diese Frage wird derzeit von einem anderen Team bearbeitet.</p>
       <button class="alert-btn" onclick="closeCustomAlert()">OK</button>
     </div>
@@ -639,7 +650,6 @@
         <h3 id="display-team" style="color: var(--cyan-neon); margin: 0; font-size: 20px; font-weight: 700; letter-spacing: 1px;"></h3>
       </div>
       
-      <!-- DYNAMISCHES LIVE-SCOREBOARD -->
       <div class="live-scoreboard-mini" id="mini-scoreboard">
         <div class="mini-score-tag" id="tag-Hopfen">🌾 Hopfen: <span id="val-Hopfen">0</span></div>
         <div class="mini-score-tag" id="tag-Malz">🪵 Malz: <span id="val-Malz">0</span></div>
@@ -663,17 +673,16 @@
     </div>
   </div>
 
-  <!-- NEUES OPTISCH ANSPRECHENDES ENDERGEBNIS-PODIUM -->
+  <!-- DAS SENSATIONELLE FINAL-PODIUM -->
   <div id="end-screen">
     <div class="podium-container">
       <h1 style="font-size: 42px; margin-bottom: 5px; color: #fff; text-shadow: 0 0 20px rgba(255,204,0,0.3);">🏆 ENDSTAND 🏆</h1>
       <p style="color: var(--text-muted); font-size: 18px; margin-bottom: 10px;">Das Spiel ist beendet. Alle Fragen wurden gespielt.</p>
       
-      <div class="final-ranks-list" id="podium-ranks-target">
-        <!-- Wird dynamisch befüllt -->
-      </div>
+      <div class="final-ranks-list" id="podium-ranks-target"></div>
       
-      <p style="font-size: 26px; margin-top: 45px; color: var(--accent-color); letter-spacing: 6px; font-weight: 800; animation: pulseCountdown 1s infinite alternate;">✨ GRATULATION AN ALLE TEAMS ✨</p>
+      <button class="save-exit-btn" onclick="saveAndExitGame()">Ergebnis speichern & beenden</button>
+      <p style="font-size: 24px; margin-top: 35px; color: var(--accent-color); letter-spacing: 4px; font-weight: 800;">✨ GRATULATION AN ALLE TEAMS ✨</p>
     </div>
   </div>
 
@@ -689,6 +698,7 @@
     let lobbyChannel = null;
     let countdownActive = false;
     let countdownInterval = null;
+    let isGameOver = false;
     
     const supabaseUrl = "https://accjeyhsrghbxezyboxt.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mjg5ODIsImV4cCI6MjA5NzEwNDk4Mn0.njbnA14y98wuVdoPJHlk3tsBBQcOCC4A0nOfBUrlqzQ";
@@ -702,7 +712,6 @@
     function createBeerStars() {
       const container = document.getElementById('star-container');
       if (!container) return;
-      const { clientWidth, clientHeight } = document.documentElement;
       const beerCount = 55; 
       const rhythms = ['twinkle-slow', 'twinkle-mid', 'twinkle-fast'];
 
@@ -748,7 +757,6 @@
 
     function setupLobbyRealtime() {
       if (lobbyChannel) return;
-
       lobbyChannel = supabaseClientInstance
         .channel('lobby-room-channel')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'jeopardy_logins' }, () => {
@@ -758,10 +766,7 @@
     }
 
     async function checkLobbyStatus() {
-      const { data: logins, error } = await supabaseClientInstance
-        .from("jeopardy_logins")
-        .select("team_name");
-        
+      const { data: logins, error } = await supabaseClientInstance.from("jeopardy_logins").select("team_name");
       if (error || !logins) return;
 
       const loggedTeams = logins.map(l => l.team_name);
@@ -861,7 +866,6 @@
       updateAllScores();
     }
 
-    // DYNAMISCHE NEUANORDNUNG (HIGHSCORE LINKS, LOWSCORE RECHTS)
     function updateAllScores() {
       const globalScores = { Hopfen: 0, Malz: 0, Bier: 0, Durst: 0 };
       const teamIcons = { Hopfen: "🌾", Malz: "🪵", Bier: "🍺", Durst: "🔥" };
@@ -878,20 +882,18 @@
       myScore = globalScores[currentTeam] || 0;
       document.getElementById("display-score").innerText = `Score: ${myScore} Punkte`;
 
-      // Array erstellen und absteigend sortieren
       const sortedTeams = Object.keys(globalScores).map(name => ({
         name: name,
         score: globalScores[name]
       })).sort((a, b) => b.score - a.score);
 
-      // Scoreboard-DOM leeren und dynamisch sortiert neu aufbauen
       const scoreboardContainer = document.getElementById("mini-scoreboard");
+      if (!scoreboardContainer) return;
       scoreboardContainer.innerHTML = "";
 
       sortedTeams.forEach(item => {
         const div = document.createElement("div");
         div.className = `mini-score-tag ${item.name === currentTeam ? 'active-tag' : ''}`;
-        div.id = `tag-${item.name}`;
         div.innerHTML = `${teamIcons[item.name]} ${item.name}: <span>${item.score}</span>`;
         scoreboardContainer.appendChild(div);
       });
@@ -921,6 +923,7 @@
     }
 
     function buildMatrix() {
+      if (isGameOver) return;
       const container = document.getElementById("matrix-container");
       container.innerHTML = "";
 
@@ -952,7 +955,6 @@
             }
             else if (state.status === 'locked' && state.locked_by !== currentTeam) {
               cell.classList.add("locked");
-              // INTERNES MODAL TRIGGERS BEIM KLICK AUF FREMDE SPERRE
               cell.onclick = () => openCustomAlert(`Dieses Feld wird gerade von Team ${state.locked_by.toUpperCase()} bearbeitet!`);
             }
             else if (state.failed_teams && state.failed_teams.includes(currentTeam)) {
@@ -970,7 +972,6 @@
       }
     }
 
-    // MODAL FUNKTIONEN
     function openCustomAlert(msg) {
       document.getElementById("custom-alert-text").innerText = msg;
       document.getElementById("custom-alert").style.display = "flex";
@@ -1001,7 +1002,7 @@
           return; 
         }
 
-        const { data, error } = await supabaseClientInstance
+        const { data, error = null } = await supabaseClientInstance
           .from("jeopardy_game_state")
           .update({ status: 'locked', locked_by: currentTeam })
           .eq('question_id', questionId)
@@ -1018,7 +1019,7 @@
         showQuestionView(question);
 
       } catch (err) {
-        console.error("Live-Synchronisationsfehler beim Klicken:", err);
+        console.error(err);
       }
     }
 
@@ -1078,12 +1079,21 @@
         }).eq('question_id', activeQuestion.id);
       }
 
+      // WICHTIG: Wenn das Spiel vorbei ist, unterbrechen wir das automatische Zurückspringen zur Matrix!
       setTimeout(() => {
-        closeQuestionView();
+        const totalQuestions = questionsData.length;
+        const solvedCount = Object.values(gameStateData).filter(s => s.status === 'solved').length;
+        
+        if (solvedCount === totalQuestions) {
+          finishJeopardyGame(); // Gehe direkt zum feierlichen Podium
+        } else {
+          closeQuestionView();  // Springe nur zurück zur Matrix, wenn noch Fragen offen sind
+        }
       }, 3000);
     }
 
     function closeQuestionView() {
+      if (isGameOver) return;
       activeQuestion = null;
       document.getElementById("question-screen").style.display = "none";
       document.getElementById("board-screen").style.display = "block";
@@ -1096,17 +1106,16 @@
       if (solvedCount === totalQuestions) finishJeopardyGame();
     }
 
-    // NEUE OPTISCH ANSPRECHENDE ENDSEITE (FEIERLICHES SIGES-PODIUM)
-    async function finishJeopardyGame() {
+    function finishJeopardyGame() {
+      if (isGameOver) return; 
+      isGameOver = true;
+
       if (realtimeChannel) realtimeChannel.unsubscribe();
+      
       document.getElementById("board-screen").style.display = "none";
       document.getElementById("question-screen").style.display = "none";
       document.getElementById("end-screen").style.display = "block";
 
-      // Eigenen Score final übertragen
-      await supabaseClientInstance.from("jeopardy_scores").insert([{ team_name: currentTeam, score: myScore }]);
-
-      // Alle Scores final berechnen
       const finalScores = { Hopfen: 0, Malz: 0, Bier: 0, Durst: 0 };
       const teamIcons = { Hopfen: "🌾", Malz: "🪵", Bier: "🍺", Durst: "🔥" };
       
@@ -1117,13 +1126,11 @@
         }
       });
 
-      // Teams in eine sortierte Rangliste überführen
       const finalRankings = Object.keys(finalScores).map(name => ({
         name: name,
         score: finalScores[name]
       })).sort((a, b) => b.score - a.score);
 
-      // Siges-Podium generieren
       const podiumTarget = document.getElementById("podium-ranks-target");
       podiumTarget.innerHTML = "";
 
@@ -1145,6 +1152,18 @@
         `;
         podiumTarget.appendChild(row);
       });
+    }
+
+    // Erst wenn man hier klickt, speichert die App das Ergebnis final in der Cloud
+    async function saveAndExitGame() {
+      try {
+        await supabaseClientInstance.from("jeopardy_scores").insert([{ team_name: currentTeam, score: myScore }]);
+        alert("Ergebnis wurde erfolgreich in der Cloud gespeichert!");
+        // Nach dem Klick wird die App sauber neugeladen und geht zurück in die Lobby
+        window.location.reload();
+      } catch (err) {
+        alert("Fehler beim Speichern: " + err.message);
+      }
     }
   </script>
 </body>
