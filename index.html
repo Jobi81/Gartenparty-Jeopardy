@@ -486,7 +486,6 @@
       box-shadow: 0 8px 20px rgba(255, 204, 0, 0.5);
     }
 
-    /* --- ENDPODIUM STYLES --- */
     .podium-container {
       max-width: 800px;
       margin: 40px auto;
@@ -612,10 +611,9 @@
 
   <div class="star-field" id="star-container"></div>
 
-  <!-- INTERNES HINWEISFENSTER -->
   <div id="custom-alert" class="alert-overlay">
     <div class="alert-modal">
-      <h3>Sperre active! 🔒</h3>
+      <h3>Sperre aktiv! 🔒</h3>
       <p id="custom-alert-text">Diese Frage wird derzeit von einem anderen Team bearbeitet.</p>
       <button class="alert-btn" onclick="closeCustomAlert()">OK</button>
     </div>
@@ -673,7 +671,6 @@
     </div>
   </div>
 
-  <!-- DAS SENSATIONELLE FINAL-PODIUM -->
   <div id="end-screen">
     <div class="podium-container">
       <h1 style="font-size: 42px; margin-bottom: 5px; color: #fff; text-shadow: 0 0 20px rgba(255,204,0,0.3);">🏆 ENDSTAND 🏆</h1>
@@ -699,6 +696,7 @@
     let countdownActive = false;
     let countdownInterval = null;
     let isGameOver = false;
+    let wakeLockInstance = null; // iOS/Apple WakeLock Speicher
     
     const supabaseUrl = "https://accjeyhsrghbxezyboxt.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjY2pleWhzcmdoYnhlenlib3h0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1Mjg5ODIsImV4cCI6MjA5NzEwNDk4Mn0.njbnA14y98wuVdoPJHlk3tsBBQcOCC4A0nOfBUrlqzQ";
@@ -708,6 +706,25 @@
     });
 
     const categories = ["Abkürzungen", "Bierländer", "Fussball-WM", "Rubrik 4", "Rubrik 5"];
+
+    // TRICK 1: Reaktiviert die CPU des Handys bei Sichtbarkeit
+    document.addEventListener('visibilitychange', async () => {
+      if (wakeLockInstance !== null && document.visibilityState === 'visible') {
+        activateWakeLock();
+      }
+    });
+
+    // Fordert beim Betriebssystem das Wachehalten des Bildschirms an
+    async function activateWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLockInstance = await navigator.wakeLock.request('screen');
+          console.log("WakeLock aktiv: Apple-Bremse erfolgreich umgangen.");
+        } catch (err) {
+          console.warn("WakeLock blockiert: ", err.message);
+        }
+      }
+    }
 
     function createBeerStars() {
       const container = document.getElementById('star-container');
@@ -804,6 +821,9 @@
       if (btn) btn.classList.add("my-choice");
       document.getElementById("lobby-msg").innerText = "Übermittle Team-Anmeldung...";
 
+      // Sobald geklickt wird, aktivieren wir die Wachhalte-Funktion
+      await activateWakeLock();
+
       try {
         await supabaseClientInstance.from("jeopardy_logins").insert([{ team_name: teamName }]);
         await checkLobbyStatus();
@@ -846,6 +866,15 @@
 
         buildMatrix();
         setupRealtime();
+
+        // TRICK 2: Der Aktivitäts-Puls. Sendet alle 2 Sekunden ein leeres Signal an Supabase.
+        // Das zwingt die Apple-Engine dazu, dieWebSocket-Leitung niemals einzuschläfern.
+        setInterval(async () => {
+          if (!isGameOver) {
+            await supabaseClientInstance.from("jeopardy_logins").select("team_name", { count: 'estimated', head: true });
+          }
+        }, 2200);
+
       } catch (err) {
         alert("Kritischer Verbindungsfehler beim Spielstart: " + err.message);
       }
@@ -1079,15 +1108,14 @@
         }).eq('question_id', activeQuestion.id);
       }
 
-      // WICHTIG: Wenn das Spiel vorbei ist, unterbrechen wir das automatische Zurückspringen zur Matrix!
       setTimeout(() => {
         const totalQuestions = questionsData.length;
         const solvedCount = Object.values(gameStateData).filter(s => s.status === 'solved').length;
         
         if (solvedCount === totalQuestions) {
-          finishJeopardyGame(); // Gehe direkt zum feierlichen Podium
+          finishJeopardyGame(); 
         } else {
-          closeQuestionView();  // Springe nur zurück zur Matrix, wenn noch Fragen offen sind
+          closeQuestionView();  
         }
       }, 3000);
     }
@@ -1111,6 +1139,7 @@
       isGameOver = true;
 
       if (realtimeChannel) realtimeChannel.unsubscribe();
+      if (wakeLockInstance) wakeLockInstance.release(); // Gibt den Bildschirm wieder für das System frei
       
       document.getElementById("board-screen").style.display = "none";
       document.getElementById("question-screen").style.display = "none";
@@ -1154,12 +1183,10 @@
       });
     }
 
-    // Erst wenn man hier klickt, speichert die App das Ergebnis final in der Cloud
     async function saveAndExitGame() {
       try {
         await supabaseClientInstance.from("jeopardy_scores").insert([{ team_name: currentTeam, score: myScore }]);
         alert("Ergebnis wurde erfolgreich in der Cloud gespeichert!");
-        // Nach dem Klick wird die App sauber neugeladen und geht zurück in die Lobby
         window.location.reload();
       } catch (err) {
         alert("Fehler beim Speichern: " + err.message);
